@@ -1,0 +1,28 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "jsx": "react-native",
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "target": "ESNext", // Añadir este target
+    "lib": ["ESNext", "DOM"], // Asegurar que DOM está incluido para objetos relacionados con navegación
+    "allowSyntheticDefaultImports": true, // Ayuda con las importaciones predeterminadas
+    "noImplicitAny": false, // Desactiva el estricto chequeo de `any` 
+    "strictNullChecks": true, // Asegurar chequeos nulos
+    "strictFunctionTypes": true // Tipos estrictos de funciones
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "babel.config.js",
+    "metro.config.js",
+    "jest.config.js"
+  ]
+}
