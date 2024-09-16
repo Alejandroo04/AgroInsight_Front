@@ -143,11 +143,15 @@ const LoginScreen: React.FC = () => {
                 </Text>
               </View>
               <Pressable
-                style={[styles.button, styles.buttonClose]}
-                onPress={() => setForgotPasswordModalVisible(!forgotPasswordModalVisible)}
-              >
-                <Text style={styles.textStyle}>Restablecer contraseña</Text>
-              </Pressable>
+              style={[styles.button, styles.buttonClose]}
+               onPress={() => {
+                setForgotPasswordModalVisible(!forgotPasswordModalVisible);
+                 navigation.navigate('PasswordRecovery'); // Navegar al componente PasswordRecovery
+               }}
+             >
+  <Text style={styles.textStyle}>Restablecer contraseña</Text>
+</Pressable>
+
             </View>
           </View>
         </Modal>

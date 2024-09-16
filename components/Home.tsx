@@ -1,10 +1,33 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native'; // Importa el hook de navegación
 import Header from './Header'; // Asegúrate de importar tu componente Header
+import axios from 'axios'; // Importar axios
 
 const Home: React.FC = () => {
+  const [nombre, setNombre] = useState('');
+  const [apellido, setApellido] = useState('');
+  const [rol, setRol] = useState('');
+
   const navigation = useNavigation();
+
+  // Hacer la solicitud al endpoint para obtener los datos del usuario
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await axios.get('https://agroinsight-backend-production.up.railway.app/user/me');
+        const { nombre, apellido, rol } = response.data; // Obtener los valores de la respuesta
+        console.log({ nombre, apellido, rol }); // Verificar los valores
+        setNombre(nombre);
+        setApellido(apellido);
+        setRol(rol);
+      } catch (error) {
+        console.error('Error al obtener los datos del usuario:', error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   const handleLogout = () => {
     // Navegar a LoginScreen y reiniciar los campos de entrada
@@ -19,12 +42,13 @@ const Home: React.FC = () => {
         <View style={styles.userInfo}>
           <View style={styles.avatar} />
           <View style={styles.userDetails}>
-            <Text style={styles.userName}>Alejandro Garcia Pimentel</Text>
-            <Text style={styles.userRole}>Superusuario</Text>
+            {/* Asegúrate de envolver todas las cadenas de texto en un <Text> */}
+            <Text style={styles.userName}>{`${nombre} ${apellido}`}</Text> {/* Mostrar nombre y apellido */}
+            <Text style={styles.userRole}>{rol}</Text> {/* Mostrar rol */}
           </View>
         </View>
         <Text style={styles.message}>
-          Bienvenido Admin
+          Bienvenido {rol || 'Usuario'} {/* Proporcionar un valor predeterminado */}
         </Text>
       </View>
 
