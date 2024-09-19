@@ -2,21 +2,22 @@ import React, { useState } from 'react';
 import { ScrollView, View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Modal } from 'react-native';
 import axios from 'axios';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Importar AsyncStorage
 import Header from './Header';
 
 type RootStackParamList = {
   Verification: { email: string };
-  Home: undefined; // Otras rutas
+  Home: undefined;
 };
 
 const Verification: React.FC = () => {
   const navigation = useNavigation();
-  const route = useRoute<RouteProp<RootStackParamList, 'Verification'>>(); // Definir el tipo de params
+  const route = useRoute<RouteProp<RootStackParamList, 'Verification'>>();
   const [code, setCode] = useState<string[]>(['', '', '', '']);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
 
-  const email = route.params.email; // Aquí se obtiene el email
+  const email = route.params.email;
 
   const handleInputChange = (index: number, value: string) => {
     if (/^[0-9]$/.test(value) || value === '') {
@@ -39,15 +40,30 @@ const Verification: React.FC = () => {
       });
 
       if (response.status === 200) {
+        const { access_token } = response.data; // Solo acces_token
+        
+        await AsyncStorage.setItem('jwtToken', access_token); // Guardar el token en AsyncStorage
+        
         setAlertMessage('Verificación exitosa.');
         setAlertVisible(true);
-        navigation.navigate('Home');
+        
+        navigation.navigate('Home'); // Navegar a Home  
       } else {
         setAlertMessage('Código incorrecto.');
         setAlertVisible(true);
       }
     } catch (error) {
-      setAlertMessage('Hubo un error al verificar el código.');
+      // Agregar logs para capturar información del error
+      console.error('Error al verificar el código:', error);
+
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.message || 'Hubo un error al verificar el código.';
+        setAlertMessage(errorMessage);
+        console.error('Detalles del error (respuesta de Axios):', error.response?.data);
+      } else {
+        setAlertMessage('Hubo un error inesperado.');
+        console.error('Error inesperado:', error);
+      }
       setAlertVisible(true);
     }
   };
@@ -62,11 +78,8 @@ const Verification: React.FC = () => {
     } catch (error) {
       setAlertMessage('Hubo un error al reenviar el código.');
       setAlertVisible(true);
+      console.error('Error al reenviar el código:', error);
     }
-  };
-
-  const closeAlert = () => {
-    setAlertVisible(false);
   };
 
   return (

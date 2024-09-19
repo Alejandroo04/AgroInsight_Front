@@ -1,143 +1,107 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
-import { useNavigation } from '@react-navigation/native'; // Importa el hook de navegación
-import Header from './Header'; // Asegúrate de importar tu componente Header
-import axios from 'axios'; // Importar axios
+import React, { useEffect, useState } from 'react';
+import { View, Text, Button, StyleSheet, TouchableOpacity } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Importar AsyncStorage
+import axios from 'axios';
+import { useNavigation } from '@react-navigation/native';
 
 const Home: React.FC = () => {
-  const [nombre, setNombre] = useState('');
-  const [apellido, setApellido] = useState('');
-  const [rol, setRol] = useState('');
-
+  const [userData, setUserData] = useState<{ nombre: string; apellido: string; rol: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const navigation = useNavigation();
 
-  // Hacer la solicitud al endpoint para obtener los datos del usuario
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await axios.get('https://agroinsight-backend-production.up.railway.app/user/me');
-        const { nombre, apellido, rol } = response.data; // Obtener los valores de la respuesta
-        console.log({ nombre, apellido, rol }); // Verificar los valores
-        setNombre(nombre);
-        setApellido(apellido);
-        setRol(rol);
-      } catch (error) {
-        console.error('Error al obtener los datos del usuario:', error);
+        const token = await AsyncStorage.getItem('jwtToken'); // Obtener el token desde AsyncStorage
+        
+        if (token) {
+          // Hacer la petición al endpoint con el token
+          const response = await axios.get('https://agroinsight-backend-production.up.railway.app/user/me', {
+            headers: {
+              Authorization: `Bearer ${token}`, // Incluir el prefijo Bearer en el token
+            },
+          });
+    
+          if (response.status === 200) {
+            setUserData({
+              nombre: response.data.nombre,
+              apellido: response.data.apellido,
+              rol: response.data.rol,
+            });
+          } else {
+            setError('No se pudieron obtener los datos del usuario.');
+          }
+        } else {
+          // Si no se encuentra un token, redirigir al login
+          navigation.navigate('LoginScreen');
+        }
+      } catch (err) {
+        console.error('Error fetching user data:', err);
+        setError('Error al obtener los datos del usuario.');
+        navigation.navigate('LoginScreen');
       }
     };
 
     fetchUserData();
   }, []);
 
-  const handleLogout = () => {
-    // Navegar a LoginScreen y reiniciar los campos de entrada
-    navigation.navigate('Login', { resetFields: true });
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem('jwtToken'); // Eliminar el token de AsyncStorage
+      navigation.navigate('LoginScreen'); // Redirigir al usuario al Login
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+    }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Header />
-      <View style={styles.content}>
-        <Text style={styles.welcomeText}>Bienvenido</Text>
-        <View style={styles.userInfo}>
-          <View style={styles.avatar} />
-          <View style={styles.userDetails}>
-            {/* Asegúrate de envolver todas las cadenas de texto en un <Text> */}
-            <Text style={styles.userName}>{`${nombre} ${apellido}`}</Text> {/* Mostrar nombre y apellido */}
-            <Text style={styles.userRole}>{rol}</Text> {/* Mostrar rol */}
-          </View>
-        </View>
-        <Text style={styles.message}>
-          Bienvenido {rol || 'Usuario'} {/* Proporcionar un valor predeterminado */}
-        </Text>
-      </View>
+    <View style={styles.container}>
+      {error ? (
+        <Text style={styles.errorText}>{error}</Text>
+      ) : userData ? (
+        <>
+          <Text style={styles.welcomeText}>Bienvenido, {userData.nombre} {userData.apellido}</Text>
+          <Text style={styles.roleText}>Rol: {userData.rol}</Text>
+        </>
+      ) : (
+        <Text>Cargando datos del usuario...</Text>
+      )}
 
-      {/* Botón de Logout */}
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutButtonText}>Cerrar sesión</Text>
       </TouchableOpacity>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9f9f9',
-  },
-  content: {
-    padding: 20,
+    justifyContent: 'center',
     alignItems: 'center',
-    flex: 1, // Permite que el contenido se expanda
+    padding: 16,
   },
   welcomeText: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#4CAF50',
-    marginBottom: 20,
+    marginBottom: 10,
   },
-  userInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 10,
-    width: '100%',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    marginBottom: 20,
-  },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#d3d3d3',
-    marginRight: 15,
-  },
-  userDetails: {
-    flex: 1,
-  },
-  userName: {
+  roleText: {
     fontSize: 18,
-    fontWeight: 'bold',
-  },
-  userRole: {
-    fontSize: 14,
-    color: 'gray',
-  },
-  message: {
-    textAlign: 'center',
-    color: '#666',
-    fontSize: 16,
-    marginTop: 10,
+    marginBottom: 20,
   },
   logoutButton: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20, // Mueve el botón a la derecha
-    backgroundColor: '#FF0000', // Color rojo
-    paddingVertical: 15,
-    paddingHorizontal: 25,
-    borderRadius: 50,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-    elevation: 8,
+    backgroundColor: 'red',
+    padding: 10,
+    borderRadius: 5,
   },
   logoutButtonText: {
-    color: '#fff',
-    fontSize: 18,
+    color: 'white',
     fontWeight: 'bold',
+  },
+  errorText: {
+    color: 'red',
+    marginBottom: 10,
   },
 });
 
