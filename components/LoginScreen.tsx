@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Modal, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react'; 
+import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Modal, Pressable, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import axios from 'axios';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons'; // Importa los íconos
@@ -11,11 +11,13 @@ const LoginScreen: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [forgotPasswordModalVisible, setForgotPasswordModalVisible] = useState(false);
+  const [successModalVisible, setSuccessModalVisible] = useState(false); // Para manejar el modal de éxito
+  const [successMessage, setSuccessMessage] = useState(''); // Mensaje de éxito
 
   const navigation = useNavigation();
   const route = useRoute();
 
-  // Limpiar campos si `resetFields` está en los parámetros de navegación
+  // Limpiar campos si resetFields está en los parámetros de navegación
   useEffect(() => {
     if (route.params?.resetFields) {
       setEmail('');
@@ -52,16 +54,28 @@ const LoginScreen: React.FC = () => {
 
       // Verificar la respuesta de la API
       if (response.status === 200) {
-        // Redirigir al componente Verification si el login es exitoso
-        navigation.navigate('Verification', { email: email });
+        setSuccessMessage('Inicio de sesión exitoso.');
+        setSuccessModalVisible(true);
+        setTimeout(() => {
+          setSuccessModalVisible(false);
+          navigation.navigate('Verification', { email: email });
+        }, 3000); // Ocultar el modal y navegar después de 3 segundos
       } else {
-        // Mostrar mensaje de error en caso de respuesta no exitosa
         setErrorMessage('Email o contraseña incorrectos.');
         setModalVisible(true);
       }
-    } catch (error) {
-      // Manejo de errores en caso de fallo de la solicitud
-      setErrorMessage('Hubo un error al intentar iniciar sesión.');
+    } catch (error: any) {
+      // Verificar si el error tiene una respuesta del servidor
+      if (error.response) {
+        // La solicitud se hizo y el servidor respondió con un código de estado diferente de 2xx
+        setErrorMessage(`Error: ${error.response.data.message || 'Error en el servidor'}`);
+      } else if (error.request) {
+        // La solicitud se hizo pero no hubo respuesta
+        setErrorMessage('No se recibió respuesta del servidor.');
+      } else {
+        // Algo sucedió al preparar la solicitud que lanzó un error
+        setErrorMessage('Error en la solicitud.');
+      }
       setModalVisible(true);
     }
   };
@@ -71,51 +85,53 @@ const LoginScreen: React.FC = () => {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={styles.innerContainer}>
-        <Image 
-          source={require('../assets/agro.png')}
-          style={styles.logo}
-        />
-
-        <Text style={styles.title}>Iniciar sesión</Text>
-
-        <View style={styles.inputContainer}>
-          <Text style={[styles.inputLabel, { fontWeight: 'bold' }]}>Email</Text>
-          <TextInput
-            style={styles.input}
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+        <View style={styles.innerContainer}>
+          <Image 
+            source={require('../assets/agro.png')}
+            style={styles.logo}
           />
-        </View>
 
-        <View style={styles.inputContainer}>
-          <Text style={[styles.inputLabel, { fontWeight: 'bold' }]}>Contraseña</Text>
-          <View style={styles.passwordContainer}>
+          <Text style={styles.title}>Iniciar sesión</Text>
+
+          <View style={styles.inputContainer}>
+            <Text style={[styles.inputLabel, { fontWeight: 'bold' }]}>Email</Text>
             <TextInput
-              style={styles.passwordInput}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
+              style={styles.input}
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
             />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIconContainer}>
-              <Icon name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={24} color="gray" />
-            </TouchableOpacity>
           </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={[styles.inputLabel, { fontWeight: 'bold' }]}>Contraseña</Text>
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+              />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIconContainer}>
+                <Icon name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={24} color="gray" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <TouchableOpacity onPress={() => setForgotPasswordModalVisible(true)}>
+            <Text style={styles.forgotPassword}>¿Olvidaste tu clave o bloqueaste tu usuario?</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+            <Text style={styles.loginButtonText}>Iniciar sesión</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+            <Text style={styles.register}>¿No tienes una cuenta? Crea una cuenta</Text>
+          </TouchableOpacity>
         </View>
-
-        <TouchableOpacity onPress={() => setForgotPasswordModalVisible(true)}>
-          <Text style={styles.forgotPassword}>¿Olvidaste tu clave o bloqueaste tu usuario?</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-          <Text style={styles.loginButtonText}>Iniciar sesión</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-          <Text style={styles.register}>¿No tienes una cuenta? Crea una cuenta</Text>
-        </TouchableOpacity>
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>
@@ -143,15 +159,14 @@ const LoginScreen: React.FC = () => {
                 </Text>
               </View>
               <Pressable
-              style={[styles.button, styles.buttonClose]}
-               onPress={() => {
-                setForgotPasswordModalVisible(!forgotPasswordModalVisible);
-                 navigation.navigate('PasswordRecovery'); // Navegar al componente PasswordRecovery
-               }}
-             >
-  <Text style={styles.textStyle}>Restablecer contraseña</Text>
-</Pressable>
-
+                style={[styles.button, styles.buttonClose]}
+                onPress={() => {
+                  setForgotPasswordModalVisible(!forgotPasswordModalVisible);
+                  navigation.navigate('PasswordRecovery'); // Navegar al componente PasswordRecovery
+                }}
+              >
+                <Text style={styles.textStyle}>Restablecer contraseña</Text>
+              </Pressable>
             </View>
           </View>
         </Modal>
@@ -165,24 +180,35 @@ const LoginScreen: React.FC = () => {
             setModalVisible(!modalVisible);
           }}
         >
+          <TouchableOpacity
+            style={styles.centeredView}
+            activeOpacity={1}
+            onPressOut={() => setModalVisible(false)} // Cierra el modal al presionar fuera de él
+          >
+            <View style={styles.errorModalView}>
+              <Icon name="close-circle-outline" size={60} color="white" />
+              <Text style={styles.errorText}>{errorMessage}</Text>
+            </View>
+          </TouchableOpacity>
+        </Modal>
+
+        {/* Modal de éxito */}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={successModalVisible}
+          onRequestClose={() => {
+            setSuccessModalVisible(!successModalVisible);
+          }}
+        >
           <View style={styles.centeredView}>
-            <View style={styles.modalView}>
-              <View style={styles.modalTitleContainer}>
-                <Text style={styles.modalTitle}>Error</Text>
-              </View>
-              <View style={styles.modalTextContainer}>
-                <Text style={styles.modalText}>{errorMessage}</Text>
-              </View>
-              <Pressable
-                style={[styles.button, styles.buttonClose]}
-                onPress={() => setModalVisible(!modalVisible)}
-              >
-                <Text style={styles.textStyle}>Cerrar</Text>
-              </Pressable>
+            <View style={styles.successModalView}>
+              <Icon name="checkmark-circle-outline" size={60} color="white" />
+              <Text style={styles.successText}>{successMessage}</Text>
             </View>
           </View>
         </Modal>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 };
@@ -238,29 +264,20 @@ const styles = StyleSheet.create({
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: '100%',
-    height: 40,
     borderBottomColor: 'gray',
     borderBottomWidth: 1,
   },
   passwordInput: {
     flex: 1,
-    height: '100%',
+    height: 40,
     paddingHorizontal: 10,
   },
   eyeIconContainer: {
-    paddingHorizontal: 10,
+    padding: 10,
   },
   forgotPassword: {
-    color: '#009707',
-    textAlign: 'right',
-    marginBottom: 10,
-    textDecorationLine: 'underline',
-  },
-  register: {
-    color: '#009707',
-    textAlign: 'right',
-    marginTop: 20,
+    fontSize: 14,
+    color: '#4CAF50',
     marginBottom: 20,
     textDecorationLine: 'underline',
   },
@@ -280,18 +297,24 @@ const styles = StyleSheet.create({
   },
   loginButtonText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  register: {
+    color: '#009707',
+    textAlign: 'right',
+    marginTop: 20,
+    marginBottom: 20,
+    textDecorationLine: 'underline',
   },
   footer: {
-    position: 'absolute',
-    bottom: 20,
-    width: '100%',
     alignItems: 'center',
+    justifyContent: 'flex-end', // Esto asegura que el pie de página esté en la parte inferior
+    paddingVertical: 10,
   },
   footerText: {
     fontSize: 12,
     color: 'gray',
-    textAlign: 'center',
   },
   centeredView: {
     flex: 1,
@@ -300,43 +323,31 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalView: {
-    margin: 20,
     backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 35,
+    borderRadius: 10,
+    padding: 20,
+    width: '80%',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-    width: '90%',
   },
   modalTitleContainer: {
-    width: '100%',
-    marginBottom: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-    alignItems: 'center',
+    marginBottom: 10,
   },
   modalTitle: {
-    fontSize: 25,
-    color: '#4CAF50',
-    width: '100%',
-    textAlign: 'center',
+    fontSize: 20,
+    fontWeight: 'bold',
   },
   modalTextContainer: {
     marginBottom: 20,
   },
   modalText: {
     fontSize: 16,
-    textAlign: 'justify',
     color: 'gray',
+    textAlign: 'justify',
   },
   button: {
-    borderRadius: 80,
-    padding: 20,
-    elevation: 2,
+    backgroundColor: '#4CAF50',
+    padding: 10,
+    borderRadius: 5,
   },
   buttonClose: {
     backgroundColor: '#4CAF50',
@@ -345,7 +356,42 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     textAlign: 'center',
-    fontSize: 15,
+  },
+  errorModalView: {
+    width: '80%',
+    backgroundColor: 'red',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  errorText: {
+    marginTop: 15,
+    color: 'white',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  successModalView: {
+    width: '80%',
+    backgroundColor: 'green',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  successText: {
+    marginTop: 15,
+    color: 'white',
+    fontSize: 16,
+    textAlign: 'center',
   },
 });
 

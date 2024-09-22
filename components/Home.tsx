@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Button, StyleSheet, TouchableOpacity } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Importar AsyncStorage
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
+import Header from './Header';
 
 const Home: React.FC = () => {
   const [userData, setUserData] = useState<{ nombre: string; apellido: string; rol: string } | null>(null);
@@ -12,13 +13,11 @@ const Home: React.FC = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const token = await AsyncStorage.getItem('jwtToken'); // Obtener el token desde AsyncStorage
-        
+        const token = await AsyncStorage.getItem('jwtToken');
         if (token) {
-          // Hacer la petición al endpoint con el token
           const response = await axios.get('https://agroinsight-backend-production.up.railway.app/user/me', {
             headers: {
-              Authorization: `Bearer ${token}`, // Incluir el prefijo Bearer en el token
+              Authorization: `Bearer ${token}`,
             },
           });
     
@@ -32,13 +31,12 @@ const Home: React.FC = () => {
             setError('No se pudieron obtener los datos del usuario.');
           }
         } else {
-          // Si no se encuentra un token, redirigir al login
-          navigation.navigate('LoginScreen');
+          navigation.navigate('Login');
         }
       } catch (err) {
         console.error('Error fetching user data:', err);
         setError('Error al obtener los datos del usuario.');
-        navigation.navigate('LoginScreen');
+        navigation.navigate('Login');
       }
     };
 
@@ -47,56 +45,119 @@ const Home: React.FC = () => {
 
   const handleLogout = async () => {
     try {
-      await AsyncStorage.removeItem('jwtToken'); // Eliminar el token de AsyncStorage
-      navigation.navigate('LoginScreen'); // Redirigir al usuario al Login
+      await AsyncStorage.removeItem('jwtToken');
+      navigation.navigate('Login');
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
     }
   };
 
   return (
-    <View style={styles.container}>
-      {error ? (
-        <Text style={styles.errorText}>{error}</Text>
-      ) : userData ? (
-        <>
-          <Text style={styles.welcomeText}>Bienvenido, {userData.nombre} {userData.apellido}</Text>
-          <Text style={styles.roleText}>Rol: {userData.rol}</Text>
-        </>
-      ) : (
-        <Text>Cargando datos del usuario...</Text>
-      )}
-
+    <SafeAreaView style={styles.container}>
+      <Header />
+      <View style={styles.content}>
+        {error ? (
+          <Text style={styles.errorText}>{error}</Text>
+        ) : userData ? (
+          <>
+            <Text style={styles.welcomeText}>Bienvenido</Text>
+            <View style={styles.userInfo}>
+              <View style={styles.avatar} />
+              <View style={styles.userDetails}>
+                <Text style={styles.userName}>{userData.nombre} {userData.apellido}</Text>
+                <Text style={styles.userRole}>{userData.rol}</Text>
+              </View>
+            </View>
+            <Text style={styles.message}>Bienvenido {userData.rol}</Text>
+          </>
+        ) : (
+          <Text>Cargando datos del usuario...</Text>
+        )}
+      </View>
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutButtonText}>Cerrar sesión</Text>
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    backgroundColor: '#f9f9f9',
+  },
+  content: {
+    padding: 20,
     alignItems: 'center',
-    padding: 16,
+    flex: 1,
   },
   welcomeText: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  roleText: {
-    fontSize: 18,
+    color: '#4CAF50',
     marginBottom: 20,
   },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 10,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    marginBottom: 20,
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#d3d3d3',
+    marginRight: 15,
+  },
+  userDetails: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  userRole: {
+    fontSize: 14,
+    color: 'gray',
+  },
+  message: {
+    textAlign: 'center',
+    color: '#666',
+    fontSize: 16,
+    marginTop: 10,
+  },
   logoutButton: {
-    backgroundColor: 'red',
-    padding: 10,
-    borderRadius: 5,
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    backgroundColor: '#FF0000',
+    paddingVertical: 15,
+    paddingHorizontal: 25,
+    borderRadius: 50,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
   },
   logoutButtonText: {
-    color: 'white',
+    color: '#fff',
+    fontSize: 18,
     fontWeight: 'bold',
   },
   errorText: {

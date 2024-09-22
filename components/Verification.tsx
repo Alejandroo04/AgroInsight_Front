@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ScrollView, View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Modal } from 'react-native';
 import axios from 'axios';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Importar AsyncStorage
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Header from './Header';
 
 type RootStackParamList = {
@@ -40,20 +40,19 @@ const Verification: React.FC = () => {
       });
 
       if (response.status === 200) {
-        const { access_token } = response.data; // Solo acces_token
-        
-        await AsyncStorage.setItem('jwtToken', access_token); // Guardar el token en AsyncStorage
+        const { access_token } = response.data;
+
+        await AsyncStorage.setItem('jwtToken', access_token);
         
         setAlertMessage('Verificación exitosa.');
         setAlertVisible(true);
         
-        navigation.navigate('Home'); // Navegar a Home  
+        navigation.navigate('Home');
       } else {
         setAlertMessage('Código incorrecto.');
         setAlertVisible(true);
       }
     } catch (error) {
-      // Agregar logs para capturar información del error
       console.error('Error al verificar el código:', error);
 
       if (axios.isAxiosError(error)) {
@@ -80,6 +79,10 @@ const Verification: React.FC = () => {
       setAlertVisible(true);
       console.error('Error al reenviar el código:', error);
     }
+  };
+
+  const closeAlert = () => {
+    setAlertVisible(false);
   };
 
   return (
@@ -132,7 +135,6 @@ const Verification: React.FC = () => {
           Todos los derechos reservados. AgroInsight© 2024. v0.1.0
         </Text>
 
-        {/* Alerta personalizada dentro del mismo componente */}
         <Modal transparent={true} visible={alertVisible} animationType="fade">
           <View style={styles.overlay}>
             <View style={styles.alertContainer}>
@@ -268,26 +270,26 @@ const styles = StyleSheet.create({
     width: '80%',
     padding: 20,
     borderRadius: 10,
-    backgroundColor: '#fff', // Fondo blanco
+    backgroundColor: '#fff',
     alignItems: 'center',
-    borderColor: '#ccc', // Color de borde
+    borderColor: '#ccc',
     borderWidth: 1,
   },
   alertText: {
-    color: '#333', // Color del texto
+    color: '#333',
     fontSize: 18,
     marginBottom: 20,
-    textAlign: 'justify', // Texto justificado
+    textAlign: 'justify',
   },
   button: {
-    backgroundColor: '#2d922b', // Color de botón
+    backgroundColor: '#2d922b',
     padding: 10,
     borderRadius: 5,
     width: '100%',
     alignItems: 'center',
   },
   buttonText: {
-    color: '#fff', // Color del texto en el botón
+    color: '#fff',
     fontSize: 16,
   },
 });

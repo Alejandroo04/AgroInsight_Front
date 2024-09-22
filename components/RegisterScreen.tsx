@@ -16,6 +16,8 @@ const RegisterScreen: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [successModalVisible, setSuccessModalVisible] = useState(false); // Para manejar el modal de éxito
 
   const navigation = useNavigation();
 
@@ -25,7 +27,7 @@ const RegisterScreen: React.FC = () => {
   };
 
   const isValidPassword = (password: string) => {
-    return password.length >= 8;
+    return password.length >= 12;
   };
 
   const handleNext = async () => {
@@ -42,7 +44,7 @@ const RegisterScreen: React.FC = () => {
     }
 
     if (!isValidPassword(password)) {
-      setErrorMessage('La contraseña debe tener al menos 8 caracteres.');
+      setErrorMessage('La contraseña debe tener al menos 12 caracteres.');
       setModalVisible(true);
       return;
     }
@@ -62,9 +64,13 @@ const RegisterScreen: React.FC = () => {
       });
 
       if (response.status === 200 || response.status === 201) {
-        navigation.navigate('ConfirmIdentity', { email });
+        setSuccessMessage('Usuario creado con éxito.');
+        setSuccessModalVisible(true); // Mostrar el modal de éxito
+        setTimeout(() => {
+          setSuccessModalVisible(false);
+          navigation.navigate('ConfirmIdentity', { email });
+        }, 3000); // Ocultar el modal y navegar después de 3 segundos
       }
-      
     } catch (error) {
       setErrorMessage('Hubo un problema al crear el usuario. Inténtalo de nuevo.');
       setModalVisible(true);
@@ -135,6 +141,9 @@ const RegisterScreen: React.FC = () => {
               <Icon name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={24} color="gray" />
             </TouchableOpacity>
           </View>
+          <Text style={styles.passwordConditions}>
+            Mínimo 12 caracteres, una mayúscula, un número y un carácter especial.
+          </Text>
         </View>
 
         <View style={styles.inputContainer}>
@@ -171,30 +180,42 @@ const RegisterScreen: React.FC = () => {
 
         {/* Modal de error */}
         <Modal
-          animationType="slide"
+          animationType="fade"
           transparent={true}
           visible={modalVisible}
           onRequestClose={() => {
             setModalVisible(!modalVisible);
           }}
         >
+          <TouchableOpacity
+            style={styles.centeredView}
+            activeOpacity={1}
+            onPressOut={() => setModalVisible(false)} // Cierra el modal al presionar fuera de él
+          >
+            <View style={styles.errorModalView}>
+              <Icon name="close-circle-outline" size={60} color="white" />
+              <Text style={styles.errorText}>{errorMessage}</Text>
+            </View>
+          </TouchableOpacity>
+        </Modal>
+
+        {/* Modal de éxito */}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={successModalVisible}
+          onRequestClose={() => {
+            setSuccessModalVisible(!successModalVisible);
+          }}
+        >
           <View style={styles.centeredView}>
-            <View style={styles.modalView}>
-              <View style={styles.modalTitleContainer}>
-                <Text style={styles.modalTitle}>Error</Text>
-              </View>
-              <View style={styles.modalTextContainer}>
-                <Text style={styles.modalText}>{errorMessage}</Text>
-              </View>
-              <Pressable
-                style={[styles.button, styles.buttonClose]}
-                onPress={() => setModalVisible(!modalVisible)}
-              >
-                <Text style={styles.textStyle}>Cerrar</Text>
-              </Pressable>
+            <View style={styles.successModalView}>
+              <Icon name="check-circle-outline" size={60} color="white" />
+              <Text style={styles.successText}>{successMessage}</Text>
             </View>
           </View>
         </Modal>
+
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -250,28 +271,35 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     alignSelf: 'flex-end',
   },
+  passwordConditions: {
+    fontSize: 12,
+    color: 'gray',
+    marginTop: 5,
+  },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 80,
+    marginTop: 20,
+    alignItems: 'center',
   },
   link: {
+    marginTop: 40,
     color: 'green',
+    fontWeight: 'bold',
   },
   footerText: {
     fontSize: 12,
     color: 'gray',
+    marginTop: 20,
     textAlign: 'center',
   },
   centeredView: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    marginTop: 22,
   },
-  modalView: {
-    margin: 20,
-    backgroundColor: 'white',
+  errorModalView: {
+    width: '80%',
+    backgroundColor: 'red',
     borderRadius: 20,
     padding: 35,
     alignItems: 'center',
@@ -280,37 +308,30 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
-    width: '90%',
   },
-  modalTitleContainer: {
-    width: '100%',
-    marginBottom: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-    alignItems: 'center',
-  },
-  modalTitle: {
-    fontSize: 25,
-    color: '#4CAF50',
-    width: '100%',
-    textAlign: 'center',
-  },
-  modalTextContainer: {
-    marginBottom: 20,
-  },
-  modalText: {
-    fontSize: 16,
-    textAlign: 'justify',
-    color: 'gray',
-  },
-  buttonClose: {
-    backgroundColor: '#4CAF50',
-  },
-  textStyle: {
+  errorText: {
+    marginTop: 15,
     color: 'white',
-    fontWeight: 'bold',
+    fontSize: 16,
     textAlign: 'center',
-    fontSize: 15,
+  },
+  successModalView: {
+    width: '80%',
+    backgroundColor: 'green',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  successText: {
+    marginTop: 15,
+    color: 'white',
+    fontSize: 16,
+    textAlign: 'center',
   },
 });
 
