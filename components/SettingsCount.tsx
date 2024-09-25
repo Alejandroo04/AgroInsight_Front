@@ -6,7 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import Header from './Header';
 
 
-const Home: React.FC = () => {
+const SettingsCount: React.FC = () => {
   const [userData, setUserData] = useState<{ nombre: string; apellido: string; rol: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const navigation = useNavigation();
@@ -174,4 +174,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Home;
+export default SettingsCount;

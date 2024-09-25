@@ -1,14 +1,15 @@
-import React, { useEffect, useState } from 'react'; 
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import Header from './Header';
+import CustomDrawerContent from './CustomDrawerContent'; // Importa el CustomDrawerContent desde tu archivo
 
-
-const Home: React.FC = () => {
+const HomeAdmin: React.FC = () => {
   const [userData, setUserData] = useState<{ nombre: string; apellido: string; rol: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isDrawerVisible, setDrawerVisible] = useState(false);
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -21,20 +22,13 @@ const Home: React.FC = () => {
               Authorization: `Bearer ${token}`,
             },
           });
-    
+
           if (response.status === 200) {
-            const user = {
+            setUserData({
               nombre: response.data.nombre,
               apellido: response.data.apellido,
               rol: response.data.rol,
-            };
-
-            setUserData(user);
-
-            // Redirigir si el usuario es Superusuario
-            if (user.rol === 'Superusuario') {
-              navigation.navigate('HomeAdmin'); // Redirigir a HomeAdmin
-            }
+            });
           } else {
             setError('No se pudieron obtener los datos del usuario.');
           }
@@ -50,15 +44,6 @@ const Home: React.FC = () => {
 
     fetchUserData();
   }, []);
-
-  const handleLogout = async () => {
-    try {
-      await AsyncStorage.removeItem('jwtToken');
-      navigation.navigate('Login');
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error);
-    }
-  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -76,15 +61,26 @@ const Home: React.FC = () => {
                 <Text style={styles.userRole}>{userData.rol}</Text>
               </View>
             </View>
-            <Text style={styles.message}>Bienvenido aún no tienes un perfil asignado, comunicáte con el administrador o solicita un rol a tu empleador. </Text>
+            
+            {/* Contenedor con la imagen de la finca y el texto alineado */}
+            <View style={styles.card}>
+              <Image
+                source={require('../assets/farm-icon.png')}
+                style={styles.image}
+              />
+              <View style={styles.cardText}>
+                <Text style={styles.title}>Gestiona ahora tus fincas</Text>
+                <Text style={styles.description}>En este módulo podrás gestionar tus fincas, acceder a tus lotes y cultivos.</Text>
+              </View>
+            </View>
           </>
         ) : (
           <Text>Cargando datos del usuario...</Text>
         )}
       </View>
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutButtonText}>Cerrar sesión</Text>
-      </TouchableOpacity>
+
+      {/* Renderiza el CustomDrawerContent aquí */}
+      <CustomDrawerContent isVisible={isDrawerVisible} onClose={() => setDrawerVisible(false)} />
     </SafeAreaView>
   );
 };
@@ -140,33 +136,39 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'gray',
   },
-  message: {
-    textAlign: 'center',
-    color: '#666',
-    fontSize: 16,
-    marginTop: 10,
-  },
-  logoutButton: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    backgroundColor: '#FF0000',
-    paddingVertical: 15,
-    paddingHorizontal: 25,
-    borderRadius: 50,
+  card: {
+    flexDirection: 'row',
+    width: '90%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 5,
+    marginBottom: 20,
   },
-  logoutButtonText: {
-    color: '#fff',
-    fontSize: 18,
+  image: {
+    width: 80,
+    height: 80,
+    marginRight: 15,
+  },
+  cardText: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 20,
     fontWeight: 'bold',
+    color: '#4CAF50',
+    marginBottom: 5,
+  },
+  description: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 20,
   },
   errorText: {
     color: 'red',
@@ -174,4 +176,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Home;
+export default HomeAdmin;
