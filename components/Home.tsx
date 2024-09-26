@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react'; 
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import Header from './Header';
-
 
 const Home: React.FC = () => {
   const [userData, setUserData] = useState<{ nombre: string; apellido: string; rol: string } | null>(null);
@@ -21,7 +20,7 @@ const Home: React.FC = () => {
               Authorization: `Bearer ${token}`,
             },
           });
-    
+
           if (response.status === 200) {
             const user = {
               nombre: response.data.nombre,
@@ -31,9 +30,9 @@ const Home: React.FC = () => {
 
             setUserData(user);
 
-            // Redirigir si el usuario es Superusuario
+            // Redirigir si el usuario es Superusuario y pasar el token a HomeAdmin
             if (user.rol === 'Superusuario') {
-              navigation.navigate('HomeAdmin'); // Redirigir a HomeAdmin
+              navigation.navigate('HomeAdmin', { token }); // Redirigir a HomeAdmin con token
             }
           } else {
             setError('No se pudieron obtener los datos del usuario.');

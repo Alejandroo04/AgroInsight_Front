@@ -12,6 +12,9 @@ import HomeAdmin from './components/HomeAdmin';
 import SettingsCount from './components/SettingsCount';
 import ViewFarms from './components/ViewFarms';
 import CustomDrawerContent from './components/CustomDrawerContent';
+import CreateFarms from './components/CreateFarms';
+import DetailsFarms from './components/DetailsFarms';
+import CreatePlot from './components/CreatePlot';
 
 const Stack = createStackNavigator();
 
@@ -31,6 +34,10 @@ export default function App() {
         <Stack.Screen name="SettingsCount" component={SettingsCount} options={{headerShown: false}}/>
         <Stack.Screen name="ViewFarms" component={ViewFarms} options={{headerShown: false}}/>
         <Stack.Screen name="CustomDrawerContent" component={CustomDrawerContent} options={{headerShown: false}}/>
+        <Stack.Screen name="CreateFarms" component={CreateFarms} options={{headerShown: false}}/>
+        <Stack.Screen name="DetailsFarms" component={DetailsFarms} options={{headerShown: false}}/>
+        <Stack.Screen name="CreatePlot" component={CreatePlot} options={{headerShown: false}}/>
+        
       </Stack.Navigator>
     </NavigationContainer>
   );

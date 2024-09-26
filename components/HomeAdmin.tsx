@@ -1,25 +1,27 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Image } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
-import { useNavigation } from '@react-navigation/native';
+import { View, Text, StyleSheet, SafeAreaView, Image, TouchableOpacity } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';  // Importamos useRoute para acceder a los parámetros
 import Header from './Header';
-import CustomDrawerContent from './CustomDrawerContent'; // Importa el CustomDrawerContent desde tu archivo
+import CustomDrawerContent from './CustomDrawerContent';
+import axios from 'axios';
 
 const HomeAdmin: React.FC = () => {
   const [userData, setUserData] = useState<{ nombre: string; apellido: string; rol: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDrawerVisible, setDrawerVisible] = useState(false);
   const navigation = useNavigation();
+  
+  const route = useRoute();  // Obtenemos los parámetros de la navegación
+  const token = route.params?.token;  // Accedemos al token que se pasó desde Home
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const token = await AsyncStorage.getItem('jwtToken');
         if (token) {
+          // Aquí ya no solicitamos el token de AsyncStorage porque lo recibimos desde Home
           const response = await axios.get('https://agroinsight-backend-production.up.railway.app/user/me', {
             headers: {
-              Authorization: `Bearer ${token}`,
+              Authorization: `Bearer ${token}`,  // Utilizamos el token recibido
             },
           });
 
@@ -43,7 +45,7 @@ const HomeAdmin: React.FC = () => {
     };
 
     fetchUserData();
-  }, []);
+  }, [token]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -61,9 +63,16 @@ const HomeAdmin: React.FC = () => {
                 <Text style={styles.userRole}>{userData.rol}</Text>
               </View>
             </View>
-            
-            {/* Contenedor con la imagen de la finca y el texto alineado */}
-            <View style={styles.card}>
+
+            {/* Hacemos que la tarjeta sea tocable */}
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => {
+                if (token) {
+                  navigation.navigate('ViewFarms', { token });  // Pasamos el token como parámetro a ViewFarms
+                }
+              }}
+            >
               <Image
                 source={require('../assets/farm-icon.png')}
                 style={styles.image}
@@ -72,12 +81,19 @@ const HomeAdmin: React.FC = () => {
                 <Text style={styles.title}>Gestiona ahora tus fincas</Text>
                 <Text style={styles.description}>En este módulo podrás gestionar tus fincas, acceder a tus lotes y cultivos.</Text>
               </View>
-            </View>
+            </TouchableOpacity>
           </>
         ) : (
           <Text>Cargando datos del usuario...</Text>
         )}
       </View>
+      <View style={styles.menuButtonContainer}>
+        <TouchableOpacity style={styles.menuButton} onPress={() => setDrawerVisible(true)}>
+          <View style={styles.hamburgerLine} />
+          <View style={styles.hamburgerLine} />
+          <View style={styles.hamburgerLine} />
+        </TouchableOpacity>
+      </View> 
 
       {/* Renderiza el CustomDrawerContent aquí */}
       <CustomDrawerContent isVisible={isDrawerVisible} onClose={() => setDrawerVisible(false)} />
@@ -173,6 +189,27 @@ const styles = StyleSheet.create({
   errorText: {
     color: 'red',
     marginBottom: 10,
+  },
+  menuButtonContainer: {
+    position: 'absolute',
+    bottom: 30,
+    left: 0,
+    right: 0,
+    alignItems: 'center', // Centra horizontalmente
+  },
+  menuButton: {
+    backgroundColor: '#4CAF50',
+    borderRadius: 15,
+    padding: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  hamburgerLine: {
+    width: 30,
+    height: 4,
+    backgroundColor: '#fff',
+    marginVertical: 3,
+    borderRadius: 2,
   },
 });
 
