@@ -15,6 +15,9 @@ import CustomDrawerContent from './components/CustomDrawerContent';
 import CreateFarms from './components/CreateFarms';
 import DetailsFarms from './components/DetailsFarms';
 import CreatePlot from './components/CreatePlot';
+import ViewPlots from './components/ViewPlots';
+import ViewWorkers from './components/ViewWorkers';
+import AssociateWorkers from './components/AssociateWorkers';
 
 const Stack = createStackNavigator();
 
@@ -37,6 +40,9 @@ export default function App() {
         <Stack.Screen name="CreateFarms" component={CreateFarms} options={{headerShown: false}}/>
         <Stack.Screen name="DetailsFarms" component={DetailsFarms} options={{headerShown: false}}/>
         <Stack.Screen name="CreatePlot" component={CreatePlot} options={{headerShown: false}}/>
+        <Stack.Screen name="ViewPlots" component={ViewPlots} options={{headerShown: false}}/>
+        <Stack.Screen name="ViewWorkers" component={ViewWorkers} options={{headerShown: false}}/>
+        <Stack.Screen name="AssociateWorkers" component={AssociateWorkers} options={{headerShown: false}}/>
         
       </Stack.Navigator>
     </NavigationContainer>

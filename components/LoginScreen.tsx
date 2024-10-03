@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Modal, Pressable, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import axios from 'axios';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -10,7 +10,6 @@ const LoginScreen: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [forgotPasswordModalVisible, setForgotPasswordModalVisible] = useState(false);
   const [successModalVisible, setSuccessModalVisible] = useState(false); // Para manejar el modal de éxito
   const [successMessage, setSuccessMessage] = useState(''); // Mensaje de éxito
 
@@ -67,13 +66,10 @@ const LoginScreen: React.FC = () => {
     } catch (error: any) {
       // Verificar si el error tiene una respuesta del servidor
       if (error.response) {
-        // La solicitud se hizo y el servidor respondió con un código de estado diferente de 2xx
         setErrorMessage(`Error: ${error.response.data.message || 'Error en el servidor'}`);
       } else if (error.request) {
-        // La solicitud se hizo pero no hubo respuesta
         setErrorMessage('No se recibió respuesta del servidor.');
       } else {
-        // Algo sucedió al preparar la solicitud que lanzó un error
         setErrorMessage('Error en la solicitud.');
       }
       setModalVisible(true);
@@ -120,7 +116,7 @@ const LoginScreen: React.FC = () => {
             </View>
           </View>
 
-          <TouchableOpacity onPress={() => setForgotPasswordModalVisible(true)}>
+          <TouchableOpacity onPress={() => navigation.navigate('PasswordRecovery')}>
             <Text style={styles.forgotPassword}>¿Olvidaste tu clave o bloqueaste tu usuario?</Text>
           </TouchableOpacity>
 
@@ -138,38 +134,6 @@ const LoginScreen: React.FC = () => {
             Todos los derechos reservados. AgroInsight® 2024. v0.1.0
           </Text>
         </View>
-
-        {/* Modal de recuperación de contraseña */}
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={forgotPasswordModalVisible}
-          onRequestClose={() => {
-            setForgotPasswordModalVisible(!forgotPasswordModalVisible);
-          }}
-        >
-          <View style={styles.centeredView}>
-            <View style={styles.modalView}>
-              <View style={styles.modalTitleContainer}>
-                <Text style={styles.modalTitle}>Restablece tu contraseña</Text>
-              </View>
-              <View style={styles.modalTextContainer}>
-                <Text style={styles.modalText}>
-                  Si has olvidado tu contraseña o bloqueado el usuario puedes enviar un correo realizando la solicitud o comunicarte a nuestros canales de atención.
-                </Text>
-              </View>
-              <Pressable
-                style={[styles.button, styles.buttonClose]}
-                onPress={() => {
-                  setForgotPasswordModalVisible(!forgotPasswordModalVisible);
-                  navigation.navigate('PasswordRecovery'); // Navegar al componente PasswordRecovery
-                }}
-              >
-                <Text style={styles.textStyle}>Restablecer contraseña</Text>
-              </Pressable>
-            </View>
-          </View>
-        </Modal>
 
         {/* Modal de error */}
         <Modal
@@ -309,89 +273,45 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: 'center',
-    justifyContent: 'flex-end', // Esto asegura que el pie de página esté en la parte inferior
-    paddingVertical: 10,
+    padding: 10,
+    backgroundColor: '#f1f1f1',
   },
   footerText: {
-    fontSize: 12,
     color: 'gray',
+    fontSize: 12,
   },
   centeredView: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalView: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 20,
-    width: '80%',
-    alignItems: 'center',
-  },
-  modalTitleContainer: {
-    marginBottom: 10,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  modalTextContainer: {
-    marginBottom: 20,
-  },
-  modalText: {
-    fontSize: 16,
-    color: 'gray',
-    textAlign: 'justify',
-  },
-  button: {
-    backgroundColor: '#4CAF50',
-    padding: 10,
-    borderRadius: 5,
-  },
-  buttonClose: {
-    backgroundColor: '#4CAF50',
-  },
-  textStyle: {
-    color: 'white',
-    fontWeight: 'bold',
-    textAlign: 'center',
   },
   errorModalView: {
     width: '80%',
     backgroundColor: 'red',
+    padding: 20,
     borderRadius: 20,
-    padding: 35,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    justifyContent: 'center',
   },
   errorText: {
-    marginTop: 15,
     color: 'white',
-    fontSize: 16,
+    fontSize: 18,
     textAlign: 'center',
+    marginTop: 10,
   },
   successModalView: {
     width: '80%',
     backgroundColor: 'green',
+    padding: 20,
     borderRadius: 20,
-    padding: 35,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    justifyContent: 'center',
   },
   successText: {
-    marginTop: 15,
     color: 'white',
-    fontSize: 16,
+    fontSize: 18,
     textAlign: 'center',
+    marginTop: 10,
   },
 });
 

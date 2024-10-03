@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Image } from 'react-native';
-import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/Ionicons'; // Importa el ícono
 import axios from 'axios';
 import CustomDrawerContent from './CustomDrawerContent';
 import Header from './Header';
@@ -10,10 +10,6 @@ const DetailsFarms: React.FC = () => {
   const [isDrawerVisible, setDrawerVisible] = useState(false);
   const [farmDetails, setFarmDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [plots, setPlots] = useState<any[]>([]);
-  const [plotLoading, setPlotLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
 
   const route = useRoute();
   const navigation = useNavigation();
@@ -41,50 +37,9 @@ const DetailsFarms: React.FC = () => {
     }
   };
 
-  // Obtener lotes de la finca con paginación
-  const fetchPlots = async (page: number) => {
-    try {
-      const response = await axios.get(`https://agroinsight-backend-production.up.railway.app/plot/list/${farmId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        params: {
-          page,
-        },
-      });
-
-      setPlots(response.data.plots);
-      setTotalPages(response.data.total_pages);
-    } catch (err) {
-      console.error('Error fetching plots:', err);
-    } finally {
-      setPlotLoading(false);
-    }
-  };
-
   useEffect(() => {
     fetchFarmDetails();
   }, [token, farmId]);
-
-  // Refrescar los lotes cuando se cambia la página o el token
-  useFocusEffect(
-    useCallback(() => {
-      setPlotLoading(true);
-      fetchPlots(currentPage);
-    }, [currentPage, token])
-  );
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(prevPage => prevPage + 1);
-    }
-  };
-
-  const handlePreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(prevPage => prevPage - 1);
-    }
-  };
 
   const handleOpenMenu = () => {
     setDrawerVisible(true);
@@ -94,17 +49,28 @@ const DetailsFarms: React.FC = () => {
     setDrawerVisible(false);
   };
 
-  const handleCreateLot = () => {
-    navigation.navigate('CreatePlot', { token, farmId });
+  const handleCreatePlot = () => {
+    navigation.navigate('CreatePlot', { token, farmId }); // Redirige a CreatePlot
+  };
+
+  const handleViewPlots = () => {
+    navigation.navigate('ViewPlots', { token, farmId });
+  };
+
+  // Navegación al componente ViewWorkers
+  const handleViewWorkers = () => {
+    navigation.navigate('ViewWorkers', { token, farmId });
+  };
+  const handleAssociateWorkers = () => {
+    navigation.navigate('AssociateWorkers', { token, farmId });
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <Header />
-
       <View style={styles.topRow}>
         <Text style={styles.title}>Detalle</Text>
-        <TouchableOpacity style={styles.addButton} onPress={handleCreateLot}>
+        <TouchableOpacity style={styles.addButton} onPress={handleCreatePlot}>
           <Text style={styles.addButtonText}>+ Crear lote</Text>
         </TouchableOpacity>
       </View>
@@ -129,34 +95,21 @@ const DetailsFarms: React.FC = () => {
         <Text style={styles.noDetailsText}>No se encontraron detalles para esta finca.</Text>
       )}
 
-      {/* Mostrar lotes */}
-      {plotLoading ? (
-        <Text style={styles.loadingText}>Cargando lotes...</Text>
-      ) : plots.length === 0 ? (
-        <Text style={styles.noPlotsText}>No hay lotes para esta finca.</Text>
-      ) : (
-        <View>
-          {plots.map((plot) => (
-            <TouchableOpacity key={plot.id} style={styles.plotItem}>
-              <View style={styles.plotContent}>
-                <Text style={styles.plotName}>{plot.nombre}</Text>
-                <Icon name="eye-outline" size={24} color="#4CAF50" />
-              </View>
-            </TouchableOpacity>
-          ))}
-
-          {/* Paginación */}
-          <View style={styles.pagination}>
-            <TouchableOpacity onPress={handlePreviousPage} disabled={currentPage === 1}>
-              <Text style={currentPage === 1 ? styles.disabledButton : styles.button}>‹</Text>
-            </TouchableOpacity>
-            <Text style={styles.pageNumber}>{currentPage}</Text>
-            <TouchableOpacity onPress={handleNextPage} disabled={currentPage === totalPages}>
-              <Text style={currentPage === totalPages ? styles.disabledButton : styles.button}>›</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
+      {/* Botones de acciones con íconos */}
+      <View style={styles.actionContainer}>
+        <TouchableOpacity style={styles.actionButton} onPress={handleAssociateWorkers}>
+          <Icon name="person-add" size={20} color="#ffffff" />
+          <Text style={styles.actionButtonText}> Asociar trabajadores</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionButton} onPress={handleViewWorkers}>
+          <Icon name="people" size={20} color="#ffffff" />
+          <Text style={styles.actionButtonText}> Ver trabajadores asociados</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionButton} onPress={handleViewPlots}>
+          <Icon name="leaf" size={20} color="#ffffff" />
+          <Text style={styles.actionButtonText}> Ver lotes asociados</Text>
+        </TouchableOpacity>
+      </View>
 
       <TouchableOpacity style={styles.hamburgerButton} onPress={handleOpenMenu}>
         <View style={styles.hamburgerLine} />
@@ -206,7 +159,7 @@ const styles = StyleSheet.create({
     padding: 15,
     elevation: 2,
     borderColor: '#4CAF50',
-    borderWidth: 1, // Agrega borde verde delgado
+    borderWidth: 1,
   },
   cardContent: {
     flexDirection: 'row',
@@ -242,52 +195,22 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#777',
   },
-  noPlotsText: {
-    textAlign: 'center',
-    marginTop: 20,
-    fontSize: 18,
-    color: '#777',
+  actionContainer: {
+    margin: 20,
   },
-  plotItem: {
-    backgroundColor: '#f0fff0',
-    borderRadius: 20,
-    padding: 10,
+  actionButton: {
+    flexDirection: 'row',
+    backgroundColor: '#4CAF50',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
     marginVertical: 10,
-    marginHorizontal: 20,
-    borderWidth: 1,
-    borderColor: '#4CAF50',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  plotContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  plotName: {
-    fontSize: 18,
-    color: '#333',
-    fontWeight: '500',
-  },  pagination: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginVertical: 20,
-  },
-  button: {
-    fontSize: 24,
-    paddingHorizontal: 10,
-    color: '#4CAF50',
-  },
-  disabledButton: {
-    fontSize: 24,
-    paddingHorizontal: 10,
-    color: '#ccc',
-  },
-  pageNumber: {
-    fontSize: 18,
-    marginHorizontal: 10,
-    fontWeight: 'bold',
+  actionButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    marginLeft: 10, // Espacio entre el ícono y el texto
   },
   hamburgerButton: {
     position: 'absolute',

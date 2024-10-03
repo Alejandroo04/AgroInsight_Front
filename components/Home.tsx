@@ -75,7 +75,15 @@ const Home: React.FC = () => {
                 <Text style={styles.userRole}>{userData.rol}</Text>
               </View>
             </View>
-            <Text style={styles.message}>Bienvenido aún no tienes un perfil asignado, comunicáte con el administrador o solicita un rol a tu empleador. </Text>
+
+            {/* Condición para el mensaje personalizado basado en el rol */}
+            {userData.rol === 'Trabajador Agrícola' ? (
+              <Text style={styles.message}>Bienvenido Trabajador Agrícola</Text>
+            ) : (
+              <Text style={styles.message}>
+                Bienvenido, aún no tienes un perfil asignado, comunícate con el administrador o solicita un rol a tu empleador.
+              </Text>
+            )}
           </>
         ) : (
           <Text>Cargando datos del usuario...</Text>
