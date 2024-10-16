@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScrollView, View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Modal } from 'react-native';
+import { ScrollView, View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Modal, ActivityIndicator } from 'react-native';
 import Header from './Header';
 import axios from 'axios';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -14,6 +14,7 @@ const ResetPassword: React.FC = () => {
   const [alertMessage, setAlertMessage] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [matchError, setMatchError] = useState('');
+  const [loading, setLoading] = useState(false); // Estado para controlar la carga
 
   const navigation = useNavigation();
   const route = useRoute();
@@ -46,35 +47,41 @@ const ResetPassword: React.FC = () => {
   const handleSubmit = async () => {
     setPasswordError('');
     setMatchError('');
-
+    setLoading(true); // Mostrar el loader
+  
     const passwordValidationMessage = validatePassword(password);
     if (passwordValidationMessage) {
       setPasswordError(passwordValidationMessage);
+      setLoading(false); // Ocultar el loader en caso de error
       return;
     }
-
+  
     if (password !== confirmPassword) {
       setMatchError('Las contraseñas no coinciden.');
+      setLoading(false); // Ocultar el loader en caso de error
       return;
     }
-
+  
     try {
       const response = await axios.post('https://agroinsight-backend-production.up.railway.app/user/reset-password', {
         email,
         new_password: password,
       });
-
+  
+      setLoading(false); // Ocultar el loader después de la respuesta
+  
       if (response.status === 200) {
         setAlertMessage('Contraseña restablecida correctamente.');
         setAlertVisible(true);
-        navigation.navigate('Login'); // Navegar a la pantalla de login después de un corto retraso
+        setTimeout(() => navigation.navigate('Login'), 1000); // Navegar a la pantalla de login después de un corto retraso
       } else {
         setAlertMessage('Error al restablecer la contraseña.');
         setAlertVisible(true);
       }
     } catch (error) {
+      setLoading(false); // Ocultar el loader en caso de error
       // Captura y muestra el mensaje del backend si está disponible
-      const backendMessage = error.response?.data?.message || 'Hubo un error en la solicitud. Por favor, intenta de nuevo.';
+      const backendMessage = error.response?.data?.error?.message || 'Hubo un error en la solicitud. Por favor, intenta de nuevo.';
       setAlertMessage(backendMessage);
       setAlertVisible(true);
     }
@@ -137,6 +144,7 @@ const ResetPassword: React.FC = () => {
           Todos los derechos reservados. AgroInsight© 2024. v0.1.0
         </Text>
 
+        {/* Modal de alerta */}
         <Modal transparent={true} visible={alertVisible} animationType="fade">
           <View style={styles.overlay}>
             <View style={styles.alertContainer}>
@@ -147,6 +155,18 @@ const ResetPassword: React.FC = () => {
             </View>
           </View>
         </Modal>
+
+        {/* Modal de carga */}
+        {loading && (
+          <Modal transparent={true} visible={loading} animationType="fade">
+            <View style={styles.overlay}>
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#2d922b" />
+                <Text style={styles.loadingText}>Cargando...</Text>
+              </View>
+            </View>
+          </Modal>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -190,7 +210,6 @@ const styles = StyleSheet.create({
   },
   inputUnderline: {
     flex: 1,
-    borderBottomWidth: 1,
     borderBottomColor: '#ccc',
     fontSize: 16,
     paddingVertical: 10,
@@ -245,35 +264,41 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: '#fff',
     alignItems: 'center',
-    borderColor: '#4CAF50',
-    borderWidth: 1,
+    justifyContent: 'center',
   },
   alertText: {
-    color: '#333',
-    fontSize: 18,
+    fontSize: 16,
     marginBottom: 20,
-    textAlign: 'center',
   },
   button: {
-    backgroundColor: '#4CAF50',
-    padding: 10,
+    backgroundColor: '#2d922b',
+    paddingVertical: 10,
+    paddingHorizontal: 30,
     borderRadius: 5,
-    width: '100%',
-    alignItems: 'center',
   },
   buttonText: {
     color: '#fff',
     fontSize: 16,
   },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+  },
+  loadingText: {
+    fontSize: 16,
+    marginTop: 10,
+  },
   errorText: {
     color: 'red',
-    marginTop: 5,
     fontSize: 14,
+    marginTop: 5,
   },
   hintText: {
-    color: 'gray',
-    marginTop: 5,
-    fontSize: 14,
+    color: '#888',
+    fontSize: 12,
   },
 });
 

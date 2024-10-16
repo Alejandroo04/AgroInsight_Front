@@ -148,7 +148,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#4CAF50',
     paddingVertical: 10,
     paddingHorizontal: 20,
-    borderRadius: 20,
+    borderRadius: 50,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
   },
   addButtonText: {
     color: '#fff',
@@ -183,15 +187,20 @@ const styles = StyleSheet.create({
   },
   farmContent: {
     flexDirection: 'row',
+    justifyContent: 'space-between', // Asegura que el texto esté centrado y el ícono a la derecha
     alignItems: 'center',
+    flex: 1,
   },
   farmName: {
     fontSize: 18,
-    color: '#333',
-    fontWeight: '500',
+  color: '#333',
+  fontWeight: '500',
+  textAlign: 'center', // Centrar el texto del nombre
+  flex: 1,
   },
   eyeIcon: {
     marginLeft: 10,
+    alignSelf: 'flex-end',
   },
   pagination: {
     flexDirection: 'row',

@@ -94,7 +94,6 @@ const CreatePlot: React.FC = () => {
         />
         {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
 
-        
         <Text style={styles.label}>* Área</Text>
         <View style={styles.areaRow}>
           <TextInput
@@ -102,13 +101,16 @@ const CreatePlot: React.FC = () => {
             placeholder="Ingresa el área"
             value={area}
             keyboardType="numeric"
-            onChangeText={setArea}
+            onChangeText={(text) => {
+              const numericText = text.replace(/[^0-9.]/g, ''); // Solo permite números y punto decimal
+              setArea(numericText);
+            }}
           />
           <TouchableOpacity style={styles.pickerWrapper} onPress={() => setPickerVisible(!pickerVisible)}>
             <Text style={styles.pickerText}>{unit}</Text>
           </TouchableOpacity>
         </View>
-
+        
         {pickerVisible && (
           <View style={styles.pickerOverlay}>
             <Picker
@@ -124,23 +126,29 @@ const CreatePlot: React.FC = () => {
             </Picker>
           </View>
         )}
-        
+
         {errors.area && <Text style={styles.errorText}>{errors.area}</Text>}
 
         <Text style={styles.label}>Latitud</Text>
         <TextInput
           style={styles.input}
-          placeholder="Ingresa la latitud"
+          placeholder="Ingresa la latitud (Entre -90 y 90)"
           value={latitude}
-          onChangeText={setLatitude}
+          onChangeText={(text) => {
+            const numericText = text.replace(/[^0-9.-]/g, ''); // Solo permite números, signo negativo y punto
+            setLatitude(numericText);
+          }}
         />
 
         <Text style={styles.label}>Longitud</Text>
         <TextInput
           style={styles.input}
-          placeholder="Ingresa la longitud"
+          placeholder="Ingresa la longitud  (Entre -180 y 180)"
           value={longitude}
-          onChangeText={setLongitude}
+          onChangeText={(text) => {
+            const numericText = text.replace(/[^0-9.-]/g, ''); // Solo permite números, signo negativo y punto
+            setLongitude(numericText);
+          }}
         />
 
         <TouchableOpacity style={styles.createButton} onPress={handleCreatePlot}>
@@ -148,11 +156,7 @@ const CreatePlot: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      <Modal
-        visible={modalVisible}
-        transparent={true}
-        animationType="slide"
-      >
+      <Modal visible={modalVisible} transparent={true} animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text>{modalMessage}</Text>

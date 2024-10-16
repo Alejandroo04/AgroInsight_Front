@@ -30,10 +30,8 @@ const Home: React.FC = () => {
 
             setUserData(user);
 
-            // Redirigir si el usuario es Superusuario y pasar el token a HomeAdmin
-            if (user.rol === 'Superusuario') {
-              navigation.navigate('HomeAdmin', { token }); // Redirigir a HomeAdmin con token
-            }
+            // Redirigir siempre a HomeAdmin y pasar el token
+            navigation.navigate('HomeAdmin', { token }); // Redirigir a HomeAdmin con el token
           } else {
             setError('No se pudieron obtener los datos del usuario.');
           }
@@ -72,18 +70,8 @@ const Home: React.FC = () => {
               <View style={styles.avatar} />
               <View style={styles.userDetails}>
                 <Text style={styles.userName}>{userData.nombre} {userData.apellido}</Text>
-                <Text style={styles.userRole}>{userData.rol}</Text>
               </View>
             </View>
-
-            {/* Condición para el mensaje personalizado basado en el rol */}
-            {userData.rol === 'Trabajador Agrícola' ? (
-              <Text style={styles.message}>Bienvenido Trabajador Agrícola</Text>
-            ) : (
-              <Text style={styles.message}>
-                Bienvenido, aún no tienes un perfil asignado, comunícate con el administrador o solicita un rol a tu empleador.
-              </Text>
-            )}
           </>
         ) : (
           <Text>Cargando datos del usuario...</Text>
@@ -142,16 +130,6 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 18,
     fontWeight: 'bold',
-  },
-  userRole: {
-    fontSize: 14,
-    color: 'gray',
-  },
-  message: {
-    textAlign: 'center',
-    color: '#666',
-    fontSize: 16,
-    marginTop: 10,
   },
   logoutButton: {
     position: 'absolute',

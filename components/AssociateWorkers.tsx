@@ -150,14 +150,14 @@ const styles = StyleSheet.create({
     flex: 1,
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 5,
+    borderRadius: 50,
     padding: 10,
   },
   addButton: {
     backgroundColor: '#4CAF50',
     padding: 10,
     marginLeft: 8,
-    borderRadius: 5,
+    borderRadius: 10,
   },
   tagContainer: {
     flexDirection: 'row',

@@ -1,9 +1,10 @@
-import React, { useState } from 'react';  
-import { ScrollView, View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Modal } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { ScrollView, View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Modal, ActivityIndicator } from 'react-native';
 import Header from './Header';
 import axios from 'axios';
 import { useRoute, RouteProp } from '@react-navigation/native';
-import { useNavigation } from '@react-navigation/native'; 
+import { useNavigation } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 type RootStackParamList = {
   ConfirmIdentityRecover: { email: string };
@@ -13,26 +14,39 @@ const ConfirmIdentityRecover: React.FC = () => {
   const [code, setCode] = useState<string[]>(['', '', '', '']);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const inputRefs = [useRef<TextInput>(null), useRef<TextInput>(null), useRef<TextInput>(null), useRef<TextInput>(null)];
 
   const route = useRoute<RouteProp<RootStackParamList, 'ConfirmIdentityRecover'>>();
   const { email } = route.params;
 
-  const navigation = useNavigation(); // Hook de navegación
+  const navigation = useNavigation();
 
   const handleInputChange = (index: number, value: string) => {
     if (/^[0-9]$/.test(value) || value === '') {
       const newCode = [...code];
       newCode[index] = value;
       setCode(newCode);
+
+      if (value !== '' && index < 3) {
+        inputRefs[index + 1].current?.focus();
+      }
+
+      if (value === '' && index > 0) {
+        inputRefs[index - 1].current?.focus();
+      }
     }
   };
 
   const handleClear = () => {
     setCode(['', '', '', '']);
+    inputRefs[0].current?.focus();
   };
 
   const handleSubmit = async () => {
     const submittedCode = code.join('');
+    setIsLoading(true);
 
     try {
       const response = await axios.post('https://agroinsight-backend-production.up.railway.app/user/confirm-recovery-pin', {
@@ -43,10 +57,10 @@ const ConfirmIdentityRecover: React.FC = () => {
       if (response.status === 200) {
         setAlertMessage('Usuario confirmado con éxito.');
         setAlertVisible(true);
-        // Redirigir a la pantalla ResetPassword después de un corto retraso para permitir que el usuario vea el mensaje
         setTimeout(() => {
-          navigation.navigate('ResetPassword', { email }); // Pasamos el email al navegar a ResetPassword
-        }, 1000);
+          setAlertVisible(false);
+          navigation.navigate('ResetPassword', { email });
+        }, 3000);
       } else {
         setAlertMessage('Error al confirmar usuario.');
         setAlertVisible(true);
@@ -54,6 +68,8 @@ const ConfirmIdentityRecover: React.FC = () => {
     } catch (error) {
       setAlertMessage('Hubo un error al confirmar tu identidad.');
       setAlertVisible(true);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -76,10 +92,7 @@ const ConfirmIdentityRecover: React.FC = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.headerContainer}>
-          <Header />
-        </View>
-
+        <Header />
         <View style={styles.verificationContainer}>
           <Text style={styles.title}>Confirma tu identidad</Text>
           <Text style={styles.subtitle}>Verificación en dos pasos</Text>
@@ -95,6 +108,7 @@ const ConfirmIdentityRecover: React.FC = () => {
                 keyboardType="numeric"
                 maxLength={1}
                 value={digit}
+                ref={inputRefs[index]}
                 onChangeText={(value) => handleInputChange(index, value)}
               />
             ))}
@@ -111,10 +125,7 @@ const ConfirmIdentityRecover: React.FC = () => {
               <Text style={styles.clearButtonText}>Limpiar</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.submitButton}
-              onPress={handleSubmit}
-            >
+            <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
               <Text style={styles.submitButtonText}>Enviar</Text>
             </TouchableOpacity>
           </View>
@@ -124,13 +135,27 @@ const ConfirmIdentityRecover: React.FC = () => {
           Todos los derechos reservados. AgroInsight© 2024. v0.1.0
         </Text>
 
-        {/* Alerta personalizada dentro del mismo componente */}
-        <Modal transparent={true} visible={alertVisible} animationType="fade">
-          <View style={styles.overlay}>
-            <View style={styles.alertContainer}>
+        {/* Indicador de carga que cubre toda la pantalla */}
+        {isLoading && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color="#4CAF50" />
+            <Text style={styles.loadingText}>Cargando...</Text>
+          </View>
+        )}
+
+        {/* Modal de error y éxito */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={alertVisible}
+          onRequestClose={closeAlert}
+        >
+          <View style={styles.centeredView}>
+            <View style={styles.successModalView}>
+              <Icon name="check-circle" size={40} color="#fff" style={styles.successIcon} />
               <Text style={styles.alertText}>{alertMessage}</Text>
-              <TouchableOpacity style={styles.button} onPress={closeAlert}>
-                <Text style={styles.buttonText}>Aceptar</Text>
+              <TouchableOpacity style={styles.successButton} onPress={closeAlert}>
+                <Text style={styles.successButtonText}>Aceptar</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -147,10 +172,6 @@ const styles = StyleSheet.create({
   },
   container: {
     flexGrow: 1,
-  },
-  headerContainer: {
-    marginTop: 0,
-    marginBottom: 20,
   },
   verificationContainer: {
     flex: 1,
@@ -257,37 +278,50 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 10,
   },
-  overlay: {
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#fff',
+    fontSize: 16,
+  },
+  centeredView: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  alertContainer: {
-    width: '80%',
-    padding: 20,
-    borderRadius: 10,
-    backgroundColor: '#fff', // Fondo blanco para el modal
+  successModalView: {
+    width: 300,
+    padding: 35,
     alignItems: 'center',
-    borderColor: '#4CAF50', // Borde verde
-    borderWidth: 1,
+    backgroundColor: '#2d922b',
+    borderRadius: 10,
+  },
+  successIcon: {
+    marginBottom: 10,
   },
   alertText: {
-    color: '#333', // Texto en color gris oscuro
-    fontSize: 18,
-    marginBottom: 20,
+    fontSize: 16,
+    color: '#fff',
     textAlign: 'center',
+    marginBottom: 20,
   },
-  button: {
-    backgroundColor: '#4CAF50', // Color verde para el botón
+  successButton: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
     padding: 10,
-    borderRadius: 5,
-    width: '100%',
+    width: '80%',
     alignItems: 'center',
   },
-  buttonText: {
-    color: '#fff', // Texto en blanco
+  successButtonText: {
+    color: '#2d922b',
     fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

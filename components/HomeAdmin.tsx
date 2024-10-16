@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Image, TouchableOpacity } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';  // Importamos useRoute para acceder a los parámetros
+import { View, Text, StyleSheet, SafeAreaView, Image, TouchableOpacity, BackHandler } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Header from './Header';
 import CustomDrawerContent from './CustomDrawerContent';
 import axios from 'axios';
@@ -10,18 +10,17 @@ const HomeAdmin: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isDrawerVisible, setDrawerVisible] = useState(false);
   const navigation = useNavigation();
-  
-  const route = useRoute();  // Obtenemos los parámetros de la navegación
-  const token = route.params?.token;  // Accedemos al token que se pasó desde Home
+
+  const route = useRoute();
+  const token = route.params?.token;
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         if (token) {
-          // Aquí ya no solicitamos el token de AsyncStorage porque lo recibimos desde Home
           const response = await axios.get('https://agroinsight-backend-production.up.railway.app/user/me', {
             headers: {
-              Authorization: `Bearer ${token}`,  // Utilizamos el token recibido
+              Authorization: `Bearer ${token}`,
             },
           });
 
@@ -47,6 +46,19 @@ const HomeAdmin: React.FC = () => {
     fetchUserData();
   }, [token]);
 
+  // Bloquear el botón de retroceso en Android
+  useEffect(() => {
+    const backAction = () => {
+      return true; // Bloquea el comportamiento predeterminado de volver atrás
+    };
+
+    BackHandler.addEventListener('hardwareBackPress', backAction);
+
+    return () => {
+      BackHandler.removeEventListener('hardwareBackPress', backAction);
+    };
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <Header />
@@ -60,16 +72,16 @@ const HomeAdmin: React.FC = () => {
               <View style={styles.avatar} />
               <View style={styles.userDetails}>
                 <Text style={styles.userName}>{userData.nombre} {userData.apellido}</Text>
-                <Text style={styles.userRole}>{userData.rol}</Text>
+                <Text style={styles.userRole}>Administrador de finca</Text>
               </View>
             </View>
 
-            {/* Hacemos que la tarjeta sea tocable */}
+            {/* Primer card */}
             <TouchableOpacity
               style={styles.card}
               onPress={() => {
                 if (token) {
-                  navigation.navigate('ViewFarms', { token });  // Pasamos el token como parámetro a ViewFarms
+                  navigation.navigate('ViewFarms', { token });
                 }
               }}
             >
@@ -80,6 +92,25 @@ const HomeAdmin: React.FC = () => {
               <View style={styles.cardText}>
                 <Text style={styles.title}>Gestiona ahora tus fincas</Text>
                 <Text style={styles.description}>En este módulo podrás gestionar tus fincas, acceder a tus lotes y cultivos.</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Segundo card con el texto de la imagen */}
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => {
+                if (token) {
+                  navigation.navigate('MyTask', { token });
+                }
+              }}
+            >
+              <Image
+                source={require('../assets/farm-icon.png')}  // Usa aquí tu icono correspondiente
+                style={styles.image}
+              />
+              <View style={styles.cardText}>
+                <Text style={styles.title}>Labores asignadas</Text>
+                <Text style={styles.description}>En este módulo podrás ver las labores que te han sido asignadas y ejecutarlas.</Text>
               </View>
             </TouchableOpacity>
           </>
@@ -93,9 +124,8 @@ const HomeAdmin: React.FC = () => {
           <View style={styles.hamburgerLine} />
           <View style={styles.hamburgerLine} />
         </TouchableOpacity>
-      </View> 
+      </View>
 
-      {/* Renderiza el CustomDrawerContent aquí */}
       <CustomDrawerContent isVisible={isDrawerVisible} onClose={() => setDrawerVisible(false)} />
     </SafeAreaView>
   );
@@ -165,7 +195,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 5,
     elevation: 5,
-    marginBottom: 20,
+    marginBottom: 20, // Ajuste del margen inferior
+    height: 150, // Altura fija para que ambas cards tengan el mismo tamaño
   },
   image: {
     width: 80,
@@ -195,7 +226,7 @@ const styles = StyleSheet.create({
     bottom: 30,
     left: 0,
     right: 0,
-    alignItems: 'center', // Centra horizontalmente
+    alignItems: 'center',
   },
   menuButton: {
     backgroundColor: '#4CAF50',

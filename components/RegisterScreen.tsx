@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Modal, Pressable, Platform, KeyboardAvoidingView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Modal, ActivityIndicator, Platform, KeyboardAvoidingView } from 'react-native';
 import { Button } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
@@ -18,6 +18,7 @@ const RegisterScreen: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [successModalVisible, setSuccessModalVisible] = useState(false); // Para manejar el modal de éxito
+  const [isLoading, setIsLoading] = useState(false); // Estado para manejar la carga
 
   const navigation = useNavigation();
 
@@ -31,57 +32,65 @@ const RegisterScreen: React.FC = () => {
   };
 
   const handleNext = async () => {
+    // Validaciones previas...
     if (!nombre || !apellido || !email || !password || !confirmPassword) {
       setErrorMessage('Por favor, llena todos los campos.');
       setModalVisible(true);
       return;
     }
-
+  
     if (!isValidEmail(email)) {
       setErrorMessage('Por favor, ingresa un correo electrónico válido.');
       setModalVisible(true);
       return;
     }
-
+  
     if (!isValidPassword(password)) {
       setErrorMessage('La contraseña debe tener al menos 12 caracteres.');
       setModalVisible(true);
       return;
     }
-
+  
     if (password !== confirmPassword) {
       setErrorMessage('Las contraseñas no coinciden.');
       setModalVisible(true);
       return;
     }
-
+  
+    // Iniciar la carga
+    setIsLoading(true);
+  
     try {
-      const response = await axios.post('https://agroinsight-backend-production.up.railway.app/user/create', {
+      const response = await axios.post('https://agroinsight-backend-production.up.railway.app/user/register', {
+        email,
         nombre,
         apellido,
-        email,
         password,
       });
-
+  
       if (response.status === 200 || response.status === 201) {
         setSuccessMessage('Usuario creado con éxito.');
-        setSuccessModalVisible(true); // Mostrar el modal de éxito
+        setSuccessModalVisible(true);
         setTimeout(() => {
           setSuccessModalVisible(false);
           navigation.navigate('ConfirmIdentity', { email });
-        }, 3000); // Ocultar el modal y navegar después de 3 segundos
+        }, 3000);
       }
     } catch (error) {
-      setErrorMessage('Hubo un problema al crear el usuario. Inténtalo de nuevo.');
-      setModalVisible(true);
-      if (error instanceof Error) {
-        console.error('Error en la creación del usuario:', error.message);
+      if (axios.isAxiosError(error) && error.response) {
+        // Extraer el mensaje de error específico de la API
+        const apiErrorMessage = error.response.data?.error?.message || 'Error desconocido del servidor';
+        setErrorMessage(apiErrorMessage);
       } else {
-        console.error('Error en la creación del usuario:', error);
+        setErrorMessage('Hubo un problema al crear el usuario. Inténtalo de nuevo.');
       }
+      setModalVisible(true);
+      console.error('Error en la creación del usuario:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
-
+  
   const navigateToLogin = () => {
     navigation.navigate('Login');
   };
@@ -216,6 +225,20 @@ const RegisterScreen: React.FC = () => {
           </View>
         </Modal>
 
+        {/* Indicador de carga */}
+        {isLoading && (
+          <Modal
+            transparent={true}
+            visible={isLoading}
+            animationType="none"
+          >
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#4CAF50" />
+              <Text style={styles.loadingText}>Cargando...</Text>
+            </View>
+          </Modal>
+        )}
+
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -255,7 +278,6 @@ const styles = StyleSheet.create({
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderBottomWidth: 1,
     borderBottomColor: 'gray',
   },
   button: {
@@ -332,6 +354,16 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     textAlign: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  loadingText: {
+    color: 'white',
+    marginTop: 10,
   },
 });
 

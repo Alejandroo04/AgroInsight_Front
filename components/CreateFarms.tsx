@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Modal } from 'react-native';
-import { Picker } from '@react-native-picker/picker'; // Importación actualizada
+import { Picker } from '@react-native-picker/picker';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import CustomDrawerContent from './CustomDrawerContent';
 import Header from './Header';
 import axios from 'axios';
+import Ionicons from 'react-native-vector-icons/Ionicons'; 
 
 const CreateFarms: React.FC = () => {
   const [isDrawerVisible, setDrawerVisible] = useState(false);
@@ -15,11 +16,11 @@ const CreateFarms: React.FC = () => {
   const [longitude, setLongitude] = useState('');
   const [latitude, setLatitude] = useState('');
   const [pickerVisible, setPickerVisible] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false); // Estado para controlar la visibilidad del modal
-  const [modalMessage, setModalMessage] = useState(''); // Mensaje del modal
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
   const [errors, setErrors] = useState<{ name?: string; location?: string; area?: string }>({});
   const route = useRoute();
-  const navigation = useNavigation(); // Hook para navegación
+  const navigation = useNavigation();
   const { token } = route.params as { token: string };
 
   const handleCreateFarm = async () => {
@@ -31,7 +32,6 @@ const CreateFarms: React.FC = () => {
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0) {
-      // Convertir la unidad a su valor numérico
       const unitValue = unit === 'Hectáreas (ha)' ? 9 : unit === 'Metros cuadrados (m²)' ? 7 : 8;
 
       try {
@@ -41,7 +41,7 @@ const CreateFarms: React.FC = () => {
             nombre: name,
             ubicacion: location,
             area_total: area,
-            unidad_area_id: unitValue,  // Aquí se pasa el valor numérico
+            unidad_area_id: unitValue,
             latitud: latitude,
             longitud: longitude,
           },
@@ -52,13 +52,12 @@ const CreateFarms: React.FC = () => {
           }
         );
         
-        // Mostrar modal de éxito
         setModalMessage('Finca creada exitosamente');
         setModalVisible(true);
 
         setTimeout(() => {
           setModalVisible(false);
-          navigation.navigate('ViewFarms', { token }); // Aquí está la corrección
+          navigation.navigate('ViewFarms', { token });
         }, 2000);
 
       } catch (error) {
@@ -66,7 +65,6 @@ const CreateFarms: React.FC = () => {
         setModalMessage('Error al crear la finca');
         setModalVisible(true);
 
-        // Cerrar modal después de 2 segundos
         setTimeout(() => {
           setModalVisible(false);
         }, 2000);
@@ -96,6 +94,7 @@ const CreateFarms: React.FC = () => {
           placeholder="Ingresa el nombre de la finca"
           value={name}
           onChangeText={setName}
+          maxLength={50}  // Limitar a 50 caracteres
         />
         {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
 
@@ -106,6 +105,7 @@ const CreateFarms: React.FC = () => {
           placeholder="Ingresa la ubicación"
           value={location}
           onChangeText={setLocation}
+          maxLength={100}  // Limitar a 100 caracteres
         />
         {errors.location && <Text style={styles.errorText}>{errors.location}</Text>}
 
@@ -116,16 +116,15 @@ const CreateFarms: React.FC = () => {
             style={[styles.input, styles.areaInput, !!errors.area && styles.errorInput]}
             placeholder="Ingresa el área"
             value={area}
-            keyboardType="numeric"
+            keyboardType="numeric"  // Solo números
             onChangeText={setArea}
+            maxLength={10}  // Limitar a 10 caracteres
           />
           
           <TouchableOpacity style={styles.pickerWrapper} onPress={() => setPickerVisible(!pickerVisible)}>
             <Text style={styles.pickerText}>{unit}</Text>
           </TouchableOpacity>
         </View>
-
-        {/* Picker para seleccionar la unidad */}
         {pickerVisible && (
           <View style={styles.pickerOverlay}>
             <Picker
@@ -141,25 +140,28 @@ const CreateFarms: React.FC = () => {
             </Picker>
           </View>
         )}
-        
         {errors.area && <Text style={styles.errorText}>{errors.area}</Text>}
 
         {/* Campo Latitud */}
-        <Text style={styles.label}>Latitud (Opcional)</Text>
+        <Text style={styles.label}>Latitud </Text>
         <TextInput
           style={styles.input}
-          placeholder="Ingresa la latitud (opcional)"
+          placeholder="Ingresa la latitud (Entre -90 y 90)"
           value={latitude}
           onChangeText={setLatitude}
+          keyboardType="numeric"
+          maxLength={15}  // Limitar a 15 caracteres
         />
 
         {/* Campo Longitud */}
-        <Text style={styles.label}>Longitud (Opcional)</Text>
+        <Text style={styles.label}>Longitud</Text>
         <TextInput
           style={styles.input}
-          placeholder="Ingresa la longitud (opcional)"
+          placeholder="Ingresa la longitud  (Entre -180 y 180)"
           value={longitude}
           onChangeText={setLongitude}
+          keyboardType="numeric"
+          maxLength={15}  // Limitar a 15 caracteres
         />
 
         {/* Botón para crear finca */}
@@ -176,6 +178,7 @@ const CreateFarms: React.FC = () => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
+            <Ionicons name="checkmark-circle" size={50} color="#4CAF50" /> 
             <Text>{modalMessage}</Text>
           </View>
         </View>
@@ -192,7 +195,6 @@ const CreateFarms: React.FC = () => {
     </SafeAreaView>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -286,10 +288,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalContent: {
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 10,
-    alignItems: 'center',
+      backgroundColor: '#fff',
+      padding: 20,
+      borderRadius: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: '80%',
   },
   hamburgerButton: {
     position: 'absolute',

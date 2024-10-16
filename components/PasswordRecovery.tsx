@@ -1,5 +1,5 @@
-import React, { useState } from 'react'; 
-import { ScrollView, View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Modal } from 'react-native';
+import React, { useState } from 'react';
+import { ScrollView, View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Modal, ActivityIndicator } from 'react-native';
 import Header from './Header';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
@@ -8,6 +8,7 @@ const PasswordRecovery: React.FC = () => {
   const [email, setEmail] = useState('');
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false); // Estado de carga
 
   const navigation = useNavigation();
 
@@ -22,6 +23,8 @@ const PasswordRecovery: React.FC = () => {
       setAlertVisible(true);
       return;
     }
+
+    setIsLoading(true); // Iniciar el indicador de carga
 
     try {
       const response = await axios.post('https://agroinsight-backend-production.up.railway.app/user/password-recovery', {
@@ -38,6 +41,8 @@ const PasswordRecovery: React.FC = () => {
     } catch (error) {
       setAlertMessage('Hubo un error en la solicitud. Por favor, intenta de nuevo.');
       setAlertVisible(true);
+    } finally {
+      setIsLoading(false); // Detener el indicador de carga
     }
   };
 
@@ -66,12 +71,13 @@ const PasswordRecovery: React.FC = () => {
               value={email}
               onChangeText={setEmail}
               placeholderTextColor="gray"
+              editable={!isLoading} // Deshabilitar el input si está cargando
             />
           </View>
 
           <View style={styles.buttonsContainer}>
-            <TouchableOpacity style={styles.nextButton} onPress={handleSubmit}>
-              <Text style={styles.nextButtonText}>Siguiente</Text>
+            <TouchableOpacity style={styles.nextButton} onPress={handleSubmit} disabled={isLoading}>
+              <Text style={styles.nextButtonText}>{isLoading ? 'Cargando...' : 'Siguiente'}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -90,6 +96,14 @@ const PasswordRecovery: React.FC = () => {
             </View>
           </View>
         </Modal>
+
+        {/* Pantalla de carga */}
+        {isLoading && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color="#4CAF50" />
+            <Text style={styles.loadingText}>Cargando...</Text>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -189,21 +203,35 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   alertText: {
+    fontSize: 16,
     color: '#333',
-    fontSize: 18,
     marginBottom: 20,
-    textAlign: 'center',
   },
   button: {
-    backgroundColor: '#4CAF50',
-    padding: 10,
-    borderRadius: 5,
-    width: '100%',
-    alignItems: 'center',
+    backgroundColor: '#2d922b',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 25,
   },
   buttonText: {
     color: '#fff',
+    fontWeight: 'bold',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    zIndex: 10,
+  },
+  loadingText: {
+    marginTop: 10,
     fontSize: 16,
+    color: '#666',
   },
 });
 

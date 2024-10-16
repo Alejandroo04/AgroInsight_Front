@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "AgroInsight_Front",
+    "name": "AgroInsight",
     "slug": "AgroInsight_Front",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -19,7 +19,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.alejo_2004.AgroInsight_Front"
+      "package": "com.alejo_2004.AgroInsight"
     },
     "web": {
       "favicon": "./assets/favicon.png"

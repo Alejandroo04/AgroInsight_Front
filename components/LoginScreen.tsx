@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Modal, Pressable, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Modal, Pressable, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, TouchableWithoutFeedback } from 'react-native';
 import axios from 'axios';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/Ionicons'; // Importa los íconos
+import Icon from 'react-native-vector-icons/Ionicons';
 
 const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -10,13 +10,14 @@ const LoginScreen: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [successModalVisible, setSuccessModalVisible] = useState(false); // Para manejar el modal de éxito
-  const [successMessage, setSuccessMessage] = useState(''); // Mensaje de éxito
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isScreenLocked, setIsScreenLocked] = useState(false); // Estado para bloquear la pantalla
 
   const navigation = useNavigation();
   const route = useRoute();
 
-  // Limpiar campos si resetFields está en los parámetros de navegación
   useEffect(() => {
     if (route.params?.resetFields) {
       setEmail('');
@@ -24,13 +25,11 @@ const LoginScreen: React.FC = () => {
     }
   }, [route.params]);
 
-  // Validación de correo electrónico
   const isValidEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  // Función para manejar el inicio de sesión
   const handleLogin = async () => {
     if (!email || !password) {
       setErrorMessage('Por favor, llena todos los campos.');
@@ -44,140 +43,169 @@ const LoginScreen: React.FC = () => {
       return;
     }
 
+    setIsLoading(true);
+
     try {
-      // Hacer la solicitud POST con Axios
       const response = await axios.post('https://agroinsight-backend-production.up.railway.app/user/login', {
         email: email,
         password: password,
       });
 
-      // Verificar la respuesta de la API
       if (response.status === 200) {
         setSuccessMessage('Inicio de sesión exitoso.');
         setSuccessModalVisible(true);
+        setIsScreenLocked(true); // Bloquear la pantalla
         setTimeout(() => {
           setSuccessModalVisible(false);
+          setIsScreenLocked(false); // Desbloquear la pantalla
           navigation.navigate('Verification', { email: email });
-        }, 3000); // Ocultar el modal y navegar después de 3 segundos
-      } else {
-        setErrorMessage('Email o contraseña incorrectos.');
-        setModalVisible(true);
+        }, 3000);
       }
     } catch (error: any) {
-      // Verificar si el error tiene una respuesta del servidor
+      console.log('Respuesta completa del servidor:', error.response);
       if (error.response) {
-        setErrorMessage(`Error: ${error.response.data.message || 'Error en el servidor'}`);
+        if (error.response.data && error.response.data.error && error.response.data.error.message) {
+          setErrorMessage(error.response.data.error.message);
+        } else {
+          setErrorMessage('Error en el servidor.');
+        }
       } else if (error.request) {
         setErrorMessage('No se recibió respuesta del servidor.');
       } else {
         setErrorMessage('Error en la solicitud.');
       }
       setModalVisible(true);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-        <View style={styles.innerContainer}>
-          <Image 
-            source={require('../assets/agro.png')}
-            style={styles.logo}
-          />
-
-          <Text style={styles.title}>Iniciar sesión</Text>
-
-          <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, { fontWeight: 'bold' }]}>Email</Text>
-            <TextInput
-              style={styles.input}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
+    <TouchableWithoutFeedback onPress={() => { if (isScreenLocked) return; }}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+          <View style={styles.innerContainer}>
+            <Image 
+              source={require('../assets/agro.png')}
+              style={styles.logo}
             />
-          </View>
 
-          <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, { fontWeight: 'bold' }]}>Contraseña</Text>
-            <View style={styles.passwordContainer}>
+            <Text style={styles.title}>Iniciar sesión</Text>
+
+            <View style={styles.inputContainer}>
+              <Text style={[styles.inputLabel, { fontWeight: 'bold' }]}>Email</Text>
               <TextInput
-                style={styles.passwordInput}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
+                style={styles.input}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
               />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIconContainer}>
-                <Icon name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={24} color="gray" />
-              </TouchableOpacity>
             </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={[styles.inputLabel, { fontWeight: 'bold' }]}>Contraseña</Text>
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIconContainer}>
+                  <Icon name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={24} color="gray" />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <TouchableOpacity onPress={() => navigation.navigate('PasswordRecovery')}>
+              <Text style={styles.forgotPassword}>¿Olvidaste tu clave o bloqueaste tu usuario?</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.loginButton}
+              onPress={handleLogin}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.loginButtonText}>Iniciar sesión</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+              <Text style={styles.register}>¿No tienes una cuenta? Crea una cuenta</Text>
+            </TouchableOpacity>
           </View>
 
-          <TouchableOpacity onPress={() => navigation.navigate('PasswordRecovery')}>
-            <Text style={styles.forgotPassword}>¿Olvidaste tu clave o bloqueaste tu usuario?</Text>
-          </TouchableOpacity>
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>
+              Todos los derechos reservados. AgroInsight® 2024. v0.1.0
+            </Text>
+          </View>
 
-          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-            <Text style={styles.loginButtonText}>Iniciar sesión</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-            <Text style={styles.register}>¿No tienes una cuenta? Crea una cuenta</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            Todos los derechos reservados. AgroInsight® 2024. v0.1.0
-          </Text>
-        </View>
-
-        {/* Modal de error */}
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={modalVisible}
-          onRequestClose={() => {
-            setModalVisible(!modalVisible);
-          }}
-        >
-          <TouchableOpacity
-            style={styles.centeredView}
-            activeOpacity={1}
-            onPressOut={() => setModalVisible(false)} // Cierra el modal al presionar fuera de él
+          {/* Modal de error */}
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={() => {
+              setModalVisible(!modalVisible);
+            }}
           >
-            <View style={styles.errorModalView}>
-              <Icon name="close-circle-outline" size={60} color="white" />
-              <Text style={styles.errorText}>{errorMessage}</Text>
-            </View>
-          </TouchableOpacity>
-        </Modal>
+            <TouchableOpacity
+              style={styles.centeredView}
+              activeOpacity={1}
+              onPressOut={() => setModalVisible(false)} // Cierra el modal al presionar fuera de él
+            >
+              <View style={styles.errorModalView}>
+                <Icon name="close-circle-outline" size={60} color="white" />
+                <Text style={styles.errorText}>{errorMessage}</Text>
+              </View>
+            </TouchableOpacity>
+          </Modal>
 
-        {/* Modal de éxito */}
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={successModalVisible}
-          onRequestClose={() => {
-            setSuccessModalVisible(!successModalVisible);
-          }}
-        >
-          <View style={styles.centeredView}>
-            <View style={styles.successModalView}>
-              <Icon name="checkmark-circle-outline" size={60} color="white" />
-              <Text style={styles.successText}>{successMessage}</Text>
+          {/* Modal de éxito */}
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={successModalVisible}
+            onRequestClose={() => {
+              setSuccessModalVisible(!successModalVisible);
+            }}
+          >
+            <View style={styles.centeredView}>
+              <View style={styles.successModalView}>
+                <Icon name="checkmark-circle-outline" size={60} color="white" />
+                <Text style={styles.successText}>{successMessage}</Text>
+              </View>
             </View>
-          </View>
-        </Modal>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          </Modal>
+
+          {/* Modal de carga que cubre toda la pantalla */}
+          {isLoading && (
+            <Modal transparent={true} animationType="none">
+              <View style={styles.loadingOverlay}>
+                <ActivityIndicator size="large" color="#4CAF50" />
+              </View>
+            </Modal>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </TouchableWithoutFeedback>
   );
 };
 
 const styles = StyleSheet.create({
+  // ... otros estilos ...
+  
+  loadingOverlay: {
+    marginTop: 20,
+  },
   container: {
     flex: 1,
     backgroundColor: '#f9f9f9',

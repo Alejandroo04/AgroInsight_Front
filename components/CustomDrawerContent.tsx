@@ -15,7 +15,7 @@ const CustomDrawerContent: React.FC<CustomDrawerContentProps> = ({ isVisible, on
   const handleLogout = async () => {
     try {
       await AsyncStorage.removeItem('jwtToken');
-      navigation.navigate('Login');
+      navigation.navigate('Login', { resetFields: true }); // Agregar el parámetro
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
     }

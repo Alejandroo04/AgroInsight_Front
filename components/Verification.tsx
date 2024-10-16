@@ -1,5 +1,15 @@
-import React, { useState } from 'react';
-import { ScrollView, View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Modal } from 'react-native';
+import React, { useState, useRef } from 'react';
+import {
+  ScrollView,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
+  Modal,
+  ActivityIndicator,
+} from 'react-native';
 import axios from 'axios';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -16,23 +26,40 @@ const Verification: React.FC = () => {
   const [code, setCode] = useState<string[]>(['', '', '', '']);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
+  const [loading, setLoading] = useState(false); // State for loading
 
   const email = route.params.email;
+
+  // Create refs for each input field
+  const inputRefs = useRef<(TextInput | null)[]>([]);
 
   const handleInputChange = (index: number, value: string) => {
     if (/^[0-9]$/.test(value) || value === '') {
       const newCode = [...code];
       newCode[index] = value;
       setCode(newCode);
+
+      // Automatically focus the next input if it exists and the current value is not empty
+      if (value !== '' && index < 3) {
+        inputRefs.current[index + 1]?.focus();
+      }
+
+      // Optionally, go back to the previous input if the current input is cleared
+      if (value === '' && index > 0) {
+        inputRefs.current[index - 1]?.focus();
+      }
     }
   };
 
   const handleClear = () => {
     setCode(['', '', '', '']);
+    // Focus the first input after clearing
+    inputRefs.current[0]?.focus();
   };
 
   const handleSubmit = async () => {
     const submittedCode = code.join('');
+    setLoading(true); // Start loading
     try {
       const response = await axios.post('https://agroinsight-backend-production.up.railway.app/user/login/verify', {
         email: email,
@@ -43,10 +70,10 @@ const Verification: React.FC = () => {
         const { access_token } = response.data;
 
         await AsyncStorage.setItem('jwtToken', access_token);
-        
+
         setAlertMessage('Verificación exitosa.');
         setAlertVisible(true);
-        
+
         navigation.navigate('Home');
       } else {
         setAlertMessage('Código incorrecto.');
@@ -64,10 +91,13 @@ const Verification: React.FC = () => {
         console.error('Error inesperado:', error);
       }
       setAlertVisible(true);
+    } finally {
+      setLoading(false); // Stop loading
     }
   };
 
   const handleResend = async () => {
+    setLoading(true); // Start loading
     try {
       await axios.post('https://agroinsight-backend-production.up.railway.app/user/resend-2fa-pin', {
         email: email,
@@ -76,8 +106,9 @@ const Verification: React.FC = () => {
       setAlertVisible(true);
     } catch (error) {
       setAlertMessage('Hubo un error al reenviar el código.');
-      setAlertVisible(true);
       console.error('Error al reenviar el código:', error);
+    } finally {
+      setLoading(false); // Stop loading
     }
   };
 
@@ -91,7 +122,7 @@ const Verification: React.FC = () => {
         <View style={styles.headerContainer}>
           <Header />
         </View>
-        
+
         <View style={styles.verificationContainer}>
           <Text style={styles.title}>Verificación en dos pasos</Text>
           <Text style={styles.description}>
@@ -102,6 +133,7 @@ const Verification: React.FC = () => {
             {code.map((digit, index) => (
               <TextInput
                 key={index}
+                ref={(ref) => (inputRefs.current[index] = ref)} // Set the ref for each input
                 style={styles.codeInput}
                 keyboardType="numeric"
                 maxLength={1}
@@ -112,21 +144,26 @@ const Verification: React.FC = () => {
           </View>
 
           <View style={styles.resendContainer}>
-            <TouchableOpacity onPress={handleResend}>
+            <TouchableOpacity onPress={handleResend} disabled={loading}>
               <Text style={styles.resendLink}>Reenviar código</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.buttonsContainer}>
-            <TouchableOpacity style={styles.clearButton} onPress={handleClear}>
+            <TouchableOpacity style={styles.clearButton} onPress={handleClear} disabled={loading}>
               <Text style={styles.clearButtonText}>Limpiar</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.submitButton}
               onPress={handleSubmit}
+              disabled={loading}
             >
-              <Text style={styles.submitButtonText}>Enviar</Text>
+              {loading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.submitButtonText}>Enviar</Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -219,7 +256,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     width: '48%',
     alignItems: 'center',
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
@@ -239,7 +276,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     width: '48%',
     alignItems: 'center',
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
@@ -276,17 +313,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   alertText: {
-    color: '#333',
-    fontSize: 18,
+    fontSize: 16,
     marginBottom: 20,
-    textAlign: 'justify',
+    textAlign: 'center',
   },
   button: {
     backgroundColor: '#2d922b',
     padding: 10,
     borderRadius: 5,
-    width: '100%',
-    alignItems: 'center',
   },
   buttonText: {
     color: '#fff',

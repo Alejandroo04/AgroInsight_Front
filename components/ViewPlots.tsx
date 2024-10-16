@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
 import axios from 'axios';
+import Icon from 'react-native-vector-icons/Ionicons';
 import CustomDrawerContent from './CustomDrawerContent';
 import Header from './Header';
 import { useRoute } from '@react-navigation/native';
@@ -60,10 +61,14 @@ const ViewPlots: React.FC = () => {
     }
   };
 
+  const handlePlotPress = (plotId: number) => {
+    // Aquí puedes manejar lo que pasa cuando se selecciona un lote
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <Header />
-      <View style={styles.titleContainer}>
+      <View style={styles.topRow}>
         <Text style={styles.title}>Lotes Asociados</Text>
       </View>
 
@@ -72,11 +77,12 @@ const ViewPlots: React.FC = () => {
       ) : plots.length > 0 ? (
         <View>
           {plots.map((plot) => (
-            <View key={plot.id} style={styles.plotCard}>
-              <Text style={styles.plotName}>{plot.nombre}</Text>
-              <Text style={styles.plotInfo}>Ubicación: {plot.ubicacion}</Text>
-              <Text style={styles.plotInfo}>Área: {plot.area_total} {plot.unidad_area}</Text>
-            </View>
+            <TouchableOpacity key={plot.id} style={styles.plotItem} onPress={() => handlePlotPress(plot.id)}>
+              <View style={styles.plotContent}>
+                <Text style={styles.plotName}>{plot.nombre}</Text>
+                <Icon name="eye-outline" size={24} color="#4CAF50" style={styles.eyeIcon} />
+              </View>
+            </TouchableOpacity>
           ))}
 
           {/* Paginación */}
@@ -110,38 +116,51 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#ffffff',
   },
-  titleContainer: {
-    padding: 20,
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginVertical: 20,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
+    color: '#794A15',
+    textAlign: 'center',
   },
   loadingText: {
     textAlign: 'center',
     marginTop: 20,
     fontSize: 18,
   },
-  plotCard: {
-    backgroundColor: '#f8f8f8',
-    borderRadius: 10,
-    padding: 15,
-    margin: 10,
-    elevation: 2,
+  plotItem: {
+    backgroundColor: '#f0fff0',
+    borderRadius: 20,
+    padding: 10,
+    marginVertical: 10,
+    marginHorizontal: 20,
+    borderWidth: 1,
+    borderColor: '#4CAF50',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  plotContent: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flex: 1,
   },
   plotName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  plotInfo: {
-    fontSize: 16,
-    color: '#333',
-  },
-  noPlotsText: {
-    textAlign: 'center',
-    marginTop: 20,
     fontSize: 18,
-    color: '#777',
+    color: '#333',
+    fontWeight: '500',
+    textAlign: 'center',
+    flex: 1,
+  },
+  eyeIcon: {
+    marginLeft: 10,
   },
   pagination: {
     flexDirection: 'row',
@@ -163,6 +182,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginHorizontal: 10,
     fontWeight: 'bold',
+  },
+  noPlotsText: {
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 18,
+    color: '#777',
   },
   hamburgerButton: {
     position: 'absolute',

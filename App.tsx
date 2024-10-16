@@ -18,6 +18,11 @@ import CreatePlot from './components/CreatePlot';
 import ViewPlots from './components/ViewPlots';
 import ViewWorkers from './components/ViewWorkers';
 import AssociateWorkers from './components/AssociateWorkers';
+import DetailsWorks from './components/DetailsWorks';
+import ViewAssignedTasks from './components/ViewAssignedTasks';
+import AssignTask from './components/AssignTask';
+import MyTask from './components/MyTask';
+import DetailsTask from './components/DetailsTask';
 
 const Stack = createStackNavigator();
 
@@ -43,6 +48,11 @@ export default function App() {
         <Stack.Screen name="ViewPlots" component={ViewPlots} options={{headerShown: false}}/>
         <Stack.Screen name="ViewWorkers" component={ViewWorkers} options={{headerShown: false}}/>
         <Stack.Screen name="AssociateWorkers" component={AssociateWorkers} options={{headerShown: false}}/>
+        <Stack.Screen name="DetailsWorks" component={DetailsWorks} options={{headerShown: false}}/>
+        <Stack.Screen name="ViewAssignedTasks" component={ViewAssignedTasks} options={{headerShown: false}}/>
+        <Stack.Screen name="AssignTask" component={AssignTask} options={{headerShown: false}}/>
+        <Stack.Screen name="MyTask" component={MyTask} options={{headerShown: false}}/>
+        <Stack.Screen name="DetailsTask" component={DetailsTask} options={{headerShown: false}}/>
         
       </Stack.Navigator>
     </NavigationContainer>

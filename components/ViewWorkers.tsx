@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useRoute, useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import CustomDrawerContent from './CustomDrawerContent';
 import Header from './Header';
@@ -14,12 +14,13 @@ const ViewWorkers: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState('');
 
   const route = useRoute();
+  const navigation = useNavigation(); 
   const { token, farmId } = route.params as { token: string; farmId: number };
 
   // Obtener trabajadores asociados a la finca con paginación
   const fetchWorkers = async (page: number) => {
     try {
-      const response = await axios.get(`https://agroinsight-backend-production.up.railway.app/farm/${farmId}/users?role_id=4`, {
+      const response = await axios.get(`https://agroinsight-backend-production.up.railway.app/farm/${farmId}/users`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -29,19 +30,17 @@ const ViewWorkers: React.FC = () => {
       });
 
       if (response.data && response.data.users) {
-        setWorkers(response.data.users); // Solo mapear si existen usuarios
-        setTotalPages(response.data.total_pages || 1); // Asegúrate de que la API retorne el total de páginas
-        setErrorMessage(''); // Resetear mensaje de error si la solicitud es exitosa
+        setWorkers(response.data.users);
+        setTotalPages(response.data.total_pages || 1);
+        setErrorMessage('');
       } else {
-        setWorkers([]); // Si no hay usuarios, asegurarse de que sea un array vacío
+        setWorkers([]);
       }
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
-        // Manejo específico para errores de la API
         const details = err.response.data.detail;
         setErrorMessage(details ? details.map((d: any) => d.msg).join(', ') : 'Error desconocido');
       } else {
-        // Manejo de errores generales
         setErrorMessage('Error al obtener trabajadores.');
       }
     } finally {
@@ -73,6 +72,18 @@ const ViewWorkers: React.FC = () => {
     }
   };
 
+  const handleWorkerPress = (worker: any) => {
+    navigation.navigate('DetailsWorks', {
+      token,
+      workerId: worker.id,
+      nombre: worker.nombre,
+      apellido: worker.apellido,
+      email: worker.email,
+      estado: worker.estado,
+      farmId
+    });
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <Header />
@@ -87,12 +98,11 @@ const ViewWorkers: React.FC = () => {
       ) : workers.length > 0 ? (
         <View>
           {workers.map((worker) => (
-            <View key={worker.id} style={styles.workerCard}>
+            <TouchableOpacity key={worker.id} onPress={() => handleWorkerPress(worker)} style={styles.workerCard}>
               <Text style={styles.workerName}>{worker.nombre} {worker.apellido}</Text>
-              <Text style={styles.workerInfo}>Rol: {worker.rol}</Text>
               <Text style={styles.workerInfo}>Email: {worker.email}</Text>
-              <Text style={styles.workerInfo}>Estado: {worker.estado}</Text>
-            </View>
+              <Text style={styles.workerStatus}>Estado: {worker.estado}</Text>
+            </TouchableOpacity>
           ))}
 
           {/* Paginación */}
@@ -134,6 +144,8 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
+    color: '#794A15',
+    textAlign: 'center',
   },
   loadingText: {
     textAlign: 'center',
@@ -160,6 +172,10 @@ const styles = StyleSheet.create({
   workerInfo: {
     fontSize: 16,
     color: '#333',
+  },
+  workerStatus: {
+    fontSize: 16,
+    color: '#4CAF50',
   },
   noWorkersText: {
     textAlign: 'center',
