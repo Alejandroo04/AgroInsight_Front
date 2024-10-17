@@ -1,11 +1,23 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Modal } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
+  Modal,
+  ScrollView,
+  Dimensions,
+} from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import CustomDrawerContent from './CustomDrawerContent';
 import Header from './Header';
 import axios from 'axios';
-import Ionicons from 'react-native-vector-icons/Ionicons'; 
+import Ionicons from 'react-native-vector-icons/Ionicons';
+
+const { width } = Dimensions.get('window');
 
 const CreateFarms: React.FC = () => {
   const [isDrawerVisible, setDrawerVisible] = useState(false);
@@ -18,20 +30,48 @@ const CreateFarms: React.FC = () => {
   const [pickerVisible, setPickerVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
-  const [errors, setErrors] = useState<{ name?: string; location?: string; area?: string }>({});
+  const [errors, setErrors] = useState<{
+    name?: string;
+    location?: string;
+    area?: string;
+    latitude?: string;
+    longitude?: string;
+  }>({});
   const route = useRoute();
   const navigation = useNavigation();
   const { token } = route.params as { token: string };
 
+  const validateLatLong = () => {
+    const newErrors: { latitude?: string; longitude?: string } = {};
+
+    if (latitude && (parseFloat(latitude) < -90 || parseFloat(latitude) > 90)) {
+      newErrors.latitude = 'La latitud debe estar entre -90 y 90';
+    }
+
+    if (longitude && (parseFloat(longitude) < -180 || parseFloat(longitude) > 180)) {
+      newErrors.longitude = 'La longitud debe estar entre -180 y 180';
+    }
+
+    return newErrors;
+  };
+
   const handleCreateFarm = async () => {
-    const newErrors: { name?: string; location?: string; area?: string } = {};
+    const newErrors: {
+      name?: string;
+      location?: string;
+      area?: string;
+      latitude?: string;
+      longitude?: string;
+    } = {};
+
     if (!name) newErrors.name = 'Este campo es requerido';
     if (!location) newErrors.location = 'Este campo es requerido';
     if (!area) newErrors.area = 'Este campo es requerido';
 
-    setErrors(newErrors);
+    const latLongErrors = validateLatLong();
+    setErrors({ ...newErrors, ...latLongErrors });
 
-    if (Object.keys(newErrors).length === 0) {
+    if (Object.keys(newErrors).length === 0 && Object.keys(latLongErrors).length === 0) {
       const unitValue = unit === 'Hectáreas (ha)' ? 9 : unit === 'Metros cuadrados (m²)' ? 7 : 8;
 
       try {
@@ -51,7 +91,7 @@ const CreateFarms: React.FC = () => {
             },
           }
         );
-        
+
         setModalMessage('Finca creada exitosamente');
         setModalVisible(true);
 
@@ -84,7 +124,7 @@ const CreateFarms: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <Header />
 
-      <View style={styles.formContainer}>
+      <ScrollView contentContainerStyle={styles.formContainer}>
         <Text style={styles.title}>Crea tu finca</Text>
 
         {/* Campo Nombre */}
@@ -109,7 +149,7 @@ const CreateFarms: React.FC = () => {
         />
         {errors.location && <Text style={styles.errorText}>{errors.location}</Text>}
 
-        {/* Campo Área dividido en dos */}
+        {/* Campo Área */}
         <Text style={styles.label}>* Área</Text>
         <View style={styles.areaRow}>
           <TextInput
@@ -120,7 +160,6 @@ const CreateFarms: React.FC = () => {
             onChangeText={setArea}
             maxLength={10}  // Limitar a 10 caracteres
           />
-          
           <TouchableOpacity style={styles.pickerWrapper} onPress={() => setPickerVisible(!pickerVisible)}>
             <Text style={styles.pickerText}>{unit}</Text>
           </TouchableOpacity>
@@ -145,30 +184,32 @@ const CreateFarms: React.FC = () => {
         {/* Campo Latitud */}
         <Text style={styles.label}>Latitud </Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, !!errors.latitude && styles.errorInput]}
           placeholder="Ingresa la latitud (Entre -90 y 90)"
           value={latitude}
           onChangeText={setLatitude}
           keyboardType="numeric"
           maxLength={15}  // Limitar a 15 caracteres
         />
+        {errors.latitude && <Text style={styles.errorText}>{errors.latitude}</Text>}
 
         {/* Campo Longitud */}
         <Text style={styles.label}>Longitud</Text>
         <TextInput
-          style={styles.input}
-          placeholder="Ingresa la longitud  (Entre -180 y 180)"
+          style={[styles.input, !!errors.longitude && styles.errorInput]}
+          placeholder="Ingresa la longitud (Entre -180 y 180)"
           value={longitude}
           onChangeText={setLongitude}
           keyboardType="numeric"
           maxLength={15}  // Limitar a 15 caracteres
         />
+        {errors.longitude && <Text style={styles.errorText}>{errors.longitude}</Text>}
 
         {/* Botón para crear finca */}
         <TouchableOpacity style={styles.createButton} onPress={handleCreateFarm}>
           <Text style={styles.createButtonText}>Crear finca</Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
 
       {/* Modal para mostrar mensajes */}
       <Modal
@@ -201,19 +242,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   formContainer: {
-    flex: 1,
-    paddingHorizontal: 20,
+    flexGrow: 1,
+    paddingHorizontal: width * 0.05, // 5% del ancho de la pantalla
     paddingTop: 20,
   },
   title: {
-    fontSize: 28,
+    fontSize: width * 0.07, // Ajusta el tamaño de fuente según el ancho
     fontWeight: 'bold',
     color: '#4CAF50',
     textAlign: 'center',
     marginBottom: 20,
   },
   label: {
-    fontSize: 16,
+    fontSize: width * 0.045, // Ajusta el tamaño de fuente según el ancho
     color: '#333',
     marginBottom: 5,
     fontWeight: 'bold',
@@ -223,7 +264,7 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     paddingVertical: 10,
     paddingHorizontal: 15,
-    fontSize: 16,
+    fontSize: width * 0.045, // Ajusta el tamaño de fuente según el ancho
     marginBottom: 15,
   },
   errorInput: {
@@ -232,6 +273,7 @@ const styles = StyleSheet.create({
   errorText: {
     color: 'red',
     marginBottom: 10,
+    fontSize: width * 0.04, // Ajusta el tamaño de fuente según el ancho
   },
   areaRow: {
     flexDirection: 'row',
@@ -249,7 +291,7 @@ const styles = StyleSheet.create({
     paddingBottom: 5,
   },
   pickerText: {
-    fontSize: 16,
+    fontSize: width * 0.045, // Ajusta el tamaño de fuente según el ancho
     color: '#000', // Color del texto
   },
   pickerOverlay: {
@@ -268,7 +310,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#009707',
     paddingVertical: 18,
-    paddingHorizontal: 120,
+    paddingHorizontal: width * 0.2, // Ancho adaptado
     borderRadius: 50,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -278,7 +320,7 @@ const styles = StyleSheet.create({
   },
   createButtonText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: width * 0.045, // Ajusta el tamaño de fuente según el ancho
     fontWeight: 'bold',
   },
   modalContainer: {
@@ -288,12 +330,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalContent: {
-      backgroundColor: '#fff',
-      padding: 20,
-      borderRadius: 8,
-      alignItems: 'center',
-      justifyContent: 'center',
-      width: '80%',
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '80%',
   },
   hamburgerButton: {
     position: 'absolute',

@@ -14,6 +14,7 @@ import axios from 'axios';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Header from './Header';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 type RootStackParamList = {
   Verification: { email: string };
@@ -26,11 +27,11 @@ const Verification: React.FC = () => {
   const [code, setCode] = useState<string[]>(['', '', '', '']);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
-  const [loading, setLoading] = useState(false); // State for loading
+  const [loading, setLoading] = useState(false);
+  const [alertSuccess, setAlertSuccess] = useState(false); // Estado para diferenciar éxito/error
 
   const email = route.params.email;
 
-  // Create refs for each input field
   const inputRefs = useRef<(TextInput | null)[]>([]);
 
   const handleInputChange = (index: number, value: string) => {
@@ -39,12 +40,10 @@ const Verification: React.FC = () => {
       newCode[index] = value;
       setCode(newCode);
 
-      // Automatically focus the next input if it exists and the current value is not empty
       if (value !== '' && index < 3) {
         inputRefs.current[index + 1]?.focus();
       }
 
-      // Optionally, go back to the previous input if the current input is cleared
       if (value === '' && index > 0) {
         inputRefs.current[index - 1]?.focus();
       }
@@ -53,13 +52,13 @@ const Verification: React.FC = () => {
 
   const handleClear = () => {
     setCode(['', '', '', '']);
-    // Focus the first input after clearing
     inputRefs.current[0]?.focus();
   };
 
   const handleSubmit = async () => {
     const submittedCode = code.join('');
-    setLoading(true); // Start loading
+    setLoading(true);
+
     try {
       const response = await axios.post('https://agroinsight-backend-production.up.railway.app/user/login/verify', {
         email: email,
@@ -68,47 +67,45 @@ const Verification: React.FC = () => {
 
       if (response.status === 200) {
         const { access_token } = response.data;
-
         await AsyncStorage.setItem('jwtToken', access_token);
-
+        
         setAlertMessage('Verificación exitosa.');
+        setAlertSuccess(true); // Éxito
         setAlertVisible(true);
 
-        navigation.navigate('Home');
+        setTimeout(() => {
+          setAlertVisible(false);
+          navigation.navigate('Home');
+        }, 3000);
       } else {
         setAlertMessage('Código incorrecto.');
+        setAlertSuccess(false); // Error
         setAlertVisible(true);
       }
     } catch (error) {
-      console.error('Error al verificar el código:', error);
-
-      if (axios.isAxiosError(error)) {
-        const errorMessage = error.response?.data?.message || 'Hubo un error al verificar el código.';
-        setAlertMessage(errorMessage);
-        console.error('Detalles del error (respuesta de Axios):', error.response?.data);
-      } else {
-        setAlertMessage('Hubo un error inesperado.');
-        console.error('Error inesperado:', error);
-      }
+      setAlertMessage('Hubo un error al verificar el código.');
+      setAlertSuccess(false); // Error
       setAlertVisible(true);
     } finally {
-      setLoading(false); // Stop loading
+      setLoading(false);
     }
   };
 
   const handleResend = async () => {
-    setLoading(true); // Start loading
+    setLoading(true);
     try {
       await axios.post('https://agroinsight-backend-production.up.railway.app/user/resend-2fa-pin', {
         email: email,
       });
       setAlertMessage('Código reenviado con éxito.');
+      setAlertSuccess(true); // Éxito
       setAlertVisible(true);
     } catch (error) {
       setAlertMessage('Hubo un error al reenviar el código.');
-      console.error('Error al reenviar el código:', error);
+      setAlertSuccess(false); // Error
+      setAlertVisible(true);
     } finally {
-      setLoading(false); // Stop loading
+      setLoading(false);
     }
   };
 
@@ -133,7 +130,7 @@ const Verification: React.FC = () => {
             {code.map((digit, index) => (
               <TextInput
                 key={index}
-                ref={(ref) => (inputRefs.current[index] = ref)} // Set the ref for each input
+                ref={(ref) => (inputRefs.current[index] = ref)}
                 style={styles.codeInput}
                 keyboardType="numeric"
                 maxLength={1}
@@ -172,12 +169,18 @@ const Verification: React.FC = () => {
           Todos los derechos reservados. AgroInsight© 2024. v0.1.0
         </Text>
 
-        <Modal transparent={true} visible={alertVisible} animationType="fade">
-          <View style={styles.overlay}>
-            <View style={styles.alertContainer}>
+        {/* Modal de error y éxito */}
+        <Modal
+          transparent={true}
+          visible={alertVisible}
+          animationType="fade"
+        >
+          <View style={styles.centeredView}>
+            <View style={[styles.modalView, alertSuccess ? styles.successModal : styles.errorModal]}>
+              <Icon name={alertSuccess ? 'check-circle' : 'alert-circle'} size={40} color="#fff" />
               <Text style={styles.alertText}>{alertMessage}</Text>
-              <TouchableOpacity style={styles.button} onPress={closeAlert}>
-                <Text style={styles.buttonText}>Aceptar</Text>
+              <TouchableOpacity style={styles.successButton} onPress={closeAlert}>
+                <Text style={styles.successButtonText}>Aceptar</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -292,39 +295,54 @@ const styles = StyleSheet.create({
   },
   footer: {
     textAlign: 'center',
-    color: '#888',
-    fontSize: 12,
+    color: '#2d922b',
     marginTop: 20,
     marginBottom: 10,
   },
-  overlay: {
+  centeredView: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
-  alertContainer: {
-    width: '80%',
-    padding: 20,
-    borderRadius: 10,
+  modalView: {
+    width: 300,
     backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 20,
     alignItems: 'center',
-    borderColor: '#ccc',
-    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  errorModal: {
+    backgroundColor: '#ff3333',
+  },
+  successModal: {
+    backgroundColor: '#4CAF50',
   },
   alertText: {
-    fontSize: 16,
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  button: {
-    backgroundColor: '#2d922b',
-    padding: 10,
-    borderRadius: 5,
-  },
-  buttonText: {
     color: '#fff',
     fontSize: 16,
+    marginVertical: 10,
+    textAlign: 'center',
+  },
+  successButton: {
+    backgroundColor: '#fff',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  successButtonText: {
+    color: '#4CAF50',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

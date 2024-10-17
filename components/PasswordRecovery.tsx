@@ -3,12 +3,14 @@ import { ScrollView, View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAr
 import Header from './Header';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/Ionicons';  // Asegúrate de que esté importado Icon para los íconos
 
 const PasswordRecovery: React.FC = () => {
   const [email, setEmail] = useState('');
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false); // Estado de carga
+  const [successVisible, setSuccessVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const navigation = useNavigation();
 
@@ -24,7 +26,7 @@ const PasswordRecovery: React.FC = () => {
       return;
     }
 
-    setIsLoading(true); // Iniciar el indicador de carga
+    setIsLoading(true);
 
     try {
       const response = await axios.post('https://agroinsight-backend-production.up.railway.app/user/password-recovery', {
@@ -32,17 +34,28 @@ const PasswordRecovery: React.FC = () => {
       });
 
       if (response.status === 200) {
-        // Navegar a la pantalla ConfirmIdentity y pasar el correo electrónico
-        navigation.navigate('ConfirmIdentityRecover', { email });
-      } else {
-        setAlertMessage('Error al solicitar el restablecimiento de contraseña.');
-        setAlertVisible(true);
+        setSuccessVisible(true);
+        setTimeout(() => {
+          setSuccessVisible(false);
+          navigation.navigate('ConfirmIdentityRecover', { email });
+        }, 3000); // Espera 3 segundos antes de navegar
       }
-    } catch (error) {
-      setAlertMessage('Hubo un error en la solicitud. Por favor, intenta de nuevo.');
+    } catch (error: any) {
+      console.log('Respuesta completa del servidor:', error.response);
+      if (error.response) {
+        if (error.response.data && error.response.data.error && error.response.data.error.message) {
+          setAlertMessage(error.response.data.error.message);
+        } else {
+          setAlertMessage('Error en el servidor.');
+        }
+      } else if (error.request) {
+        setAlertMessage('No se recibió respuesta del servidor.');
+      } else {
+        setAlertMessage('Error en la solicitud.');
+      }
       setAlertVisible(true);
     } finally {
-      setIsLoading(false); // Detener el indicador de carga
+      setIsLoading(false);
     }
   };
 
@@ -71,7 +84,7 @@ const PasswordRecovery: React.FC = () => {
               value={email}
               onChangeText={setEmail}
               placeholderTextColor="gray"
-              editable={!isLoading} // Deshabilitar el input si está cargando
+              editable={!isLoading}
             />
           </View>
 
@@ -86,10 +99,12 @@ const PasswordRecovery: React.FC = () => {
           Todos los derechos reservados. AgroInsight© 2024. v0.1.0
         </Text>
 
+        {/* Modal de error */}
         <Modal transparent={true} visible={alertVisible} animationType="fade">
-          <View style={styles.overlay}>
-            <View style={styles.alertContainer}>
-              <Text style={styles.alertText}>{alertMessage}</Text>
+          <View style={styles.centeredView}>
+            <View style={styles.errorModalView}>
+              <Icon name="close-circle-outline" size={60} color="white" />
+              <Text style={styles.errorText}>{alertMessage}</Text>
               <TouchableOpacity style={styles.button} onPress={closeAlert}>
                 <Text style={styles.buttonText}>Aceptar</Text>
               </TouchableOpacity>
@@ -97,7 +112,16 @@ const PasswordRecovery: React.FC = () => {
           </View>
         </Modal>
 
-        {/* Pantalla de carga */}
+        {/* Modal de éxito */}
+        <Modal transparent={true} visible={successVisible} animationType="fade">
+          <View style={styles.centeredView}>
+            <View style={styles.successModalView}>
+              <Icon name="checkmark-circle-outline" size={60} color="white" />
+              <Text style={styles.successText}>Correo enviado con éxito</Text>
+            </View>
+          </View>
+        </Modal>
+
         {isLoading && (
           <View style={styles.loadingOverlay}>
             <ActivityIndicator size="large" color="#4CAF50" />
@@ -187,31 +211,45 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 10,
   },
-  overlay: {
+  centeredView: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  alertContainer: {
+  errorModalView: {
     width: '80%',
+    backgroundColor: 'red',
     padding: 20,
-    borderRadius: 10,
-    backgroundColor: '#fff',
+    borderRadius: 20,
     alignItems: 'center',
-    borderColor: '#4CAF50',
-    borderWidth: 1,
+    justifyContent: 'center',
   },
-  alertText: {
-    fontSize: 16,
-    color: '#333',
-    marginBottom: 20,
+  successModalView: {
+    width: '80%',
+    backgroundColor: 'green',
+    padding: 20,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  errorText: {
+    color: 'white',
+    fontSize: 18,
+    textAlign: 'center',
+    marginTop: 10,
+  },
+  successText: {
+    color: 'white',
+    fontSize: 18,
+    textAlign: 'center',
+    marginTop: 10,
   },
   button: {
-    backgroundColor: '#2d922b',
+    backgroundColor: 'WHITE',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 25,
+    marginTop: 20,
   },
   buttonText: {
     color: '#fff',

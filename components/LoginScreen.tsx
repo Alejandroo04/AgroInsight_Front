@@ -13,7 +13,7 @@ const LoginScreen: React.FC = () => {
   const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isScreenLocked, setIsScreenLocked] = useState(false); // Estado para bloquear la pantalla
+  const [isScreenLocked, setIsScreenLocked] = useState(false);
 
   const navigation = useNavigation();
   const route = useRoute();
@@ -54,10 +54,10 @@ const LoginScreen: React.FC = () => {
       if (response.status === 200) {
         setSuccessMessage('Inicio de sesión exitoso.');
         setSuccessModalVisible(true);
-        setIsScreenLocked(true); // Bloquear la pantalla
+        setIsScreenLocked(true);
         setTimeout(() => {
           setSuccessModalVisible(false);
-          setIsScreenLocked(false); // Desbloquear la pantalla
+          setIsScreenLocked(false);
           navigation.navigate('Verification', { email: email });
         }, 3000);
       }
@@ -103,6 +103,8 @@ const LoginScreen: React.FC = () => {
                 onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                placeholder="Ejemplo@correo.com"
+                placeholderTextColor="gray"
               />
             </View>
 
@@ -114,6 +116,8 @@ const LoginScreen: React.FC = () => {
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
+                  placeholder="Tu contraseña"
+                  placeholderTextColor="gray"
                 />
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIconContainer}>
                   <Icon name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={24} color="gray" />
@@ -160,7 +164,7 @@ const LoginScreen: React.FC = () => {
             <TouchableOpacity
               style={styles.centeredView}
               activeOpacity={1}
-              onPressOut={() => setModalVisible(false)} // Cierra el modal al presionar fuera de él
+              onPressOut={() => setModalVisible(false)}
             >
               <View style={styles.errorModalView}>
                 <Icon name="close-circle-outline" size={60} color="white" />
@@ -201,24 +205,20 @@ const LoginScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  // ... otros estilos ...
-  
-  loadingOverlay: {
-    marginTop: 20,
-  },
   container: {
     flex: 1,
     backgroundColor: '#f9f9f9',
+    padding: 20,
   },
   innerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
   },
   logo: {
-    width: 440,
-    height: 410,
+    width: '100%', // Cambia a porcentajes para responsividad
+    height: undefined,
+    aspectRatio: 1, // Mantiene la relación de aspecto
     marginBottom: 10,
     resizeMode: 'contain',
     shadowColor: '#000',
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     elevation: 8,
     borderRadius: 50,
     backgroundColor: '#ffffff',
-    padding: 10,
+    padding: 20,
   },
   title: {
     fontSize: 25,
@@ -274,11 +274,11 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   loginButton: {
-    alignItems: 'center',
+    alignItems: 'center',  
     justifyContent: 'center',
     backgroundColor: '#009707',
     paddingVertical: 18,
-    paddingHorizontal: 120,
+    paddingHorizontal: 40, // Ajuste en el tamaño del botón
     borderRadius: 50,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -341,6 +341,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 10,
   },
+  loadingOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Fondo semi-transparente
+  },
 });
 
 export default LoginScreen;
+
+   

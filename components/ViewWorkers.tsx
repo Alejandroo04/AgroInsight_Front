@@ -15,7 +15,7 @@ const ViewWorkers: React.FC = () => {
 
   const route = useRoute();
   const navigation = useNavigation(); 
-  const { token, farmId } = route.params as { token: string; farmId: number };
+  const { token, farmId, farmName } = route.params as { token: string; farmId: number; farmName: string };
 
   // Obtener trabajadores asociados a la finca con paginación
   const fetchWorkers = async (page: number) => {
@@ -80,7 +80,8 @@ const ViewWorkers: React.FC = () => {
       apellido: worker.apellido,
       email: worker.email,
       estado: worker.estado,
-      farmId
+      farmId, 
+      farmName,
     });
   };
 
@@ -100,8 +101,7 @@ const ViewWorkers: React.FC = () => {
           {workers.map((worker) => (
             <TouchableOpacity key={worker.id} onPress={() => handleWorkerPress(worker)} style={styles.workerCard}>
               <Text style={styles.workerName}>{worker.nombre} {worker.apellido}</Text>
-              <Text style={styles.workerInfo}>Email: {worker.email}</Text>
-              <Text style={styles.workerStatus}>Estado: {worker.estado}</Text>
+              
             </TouchableOpacity>
           ))}
 

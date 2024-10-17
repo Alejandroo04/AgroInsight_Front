@@ -12,7 +12,7 @@ const DetailsWorks: React.FC = () => {
   const navigation = useNavigation();
 
   // Obtener token, workerId, farmId y los detalles del trabajador desde los parámetros de navegación
-  const { token, workerId, farmId, nombre, apellido, email, estado } = route.params as {
+  const { token, workerId, farmId, nombre, apellido, email, estado, farmName } = route.params as {
     token: string;
     workerId: number;
     farmId: number;
@@ -20,6 +20,7 @@ const DetailsWorks: React.FC = () => {
     apellido: string;
     email: string;
     estado: string;
+    farmName: string;
   };
 
   // Convertir "active" a "Activo" en español
@@ -38,7 +39,7 @@ const DetailsWorks: React.FC = () => {
   };
 
   const handleViewAssignedTasks = () => {
-    navigation.navigate('ViewAssignedTasks', { token, workerId });
+    navigation.navigate('ViewAssignedTasks', { token, workerId, farmName });
   };
 
   return (

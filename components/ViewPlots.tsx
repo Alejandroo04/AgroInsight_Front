@@ -19,7 +19,7 @@ const ViewPlots: React.FC = () => {
   // Obtener lotes de la finca con paginación
   const fetchPlots = async (page: number) => {
     try {
-      const response = await axios.get(`https://agroinsight-backend-production.up.railway.app/plot/list/${farmId}`, {
+      const response = await axios.get(`https://agroinsight-backend-production.up.railway.app/farm/${farmId}/plot/list`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

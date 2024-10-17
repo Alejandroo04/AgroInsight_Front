@@ -59,8 +59,9 @@ const DetailsFarms: React.FC = () => {
 
   // Navegación al componente ViewWorkers
   const handleViewWorkers = () => {
-    navigation.navigate('ViewWorkers', { token, farmId });
+    navigation.navigate('ViewWorkers', { token, farmId, farmName: farmDetails.nombre });
   };
+  
   const handleAssociateWorkers = () => {
     navigation.navigate('AssociateWorkers', { token, farmId });
   };

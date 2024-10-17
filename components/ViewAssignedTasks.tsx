@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native'; // Importar useRoute
 import Icon from 'react-native-vector-icons/Ionicons';
 import CustomDrawerContent from './CustomDrawerContent';
 import Header from './Header';
@@ -8,6 +8,8 @@ import Header from './Header';
 const ViewAssignedTasks: React.FC = () => {
   const [isDrawerVisible, setDrawerVisible] = useState(false);
   const navigation = useNavigation();
+  const route = useRoute(); // Usar useRoute para acceder a los parámetros
+  const { farmName } = route.params as { farmName: string }; // Extraer farmName
 
   const handleOpenMenu = () => {
     setDrawerVisible(true);
@@ -29,7 +31,7 @@ const ViewAssignedTasks: React.FC = () => {
 
       {/* Título de la pantalla */}
       <View style={styles.topRow}>
-        <Text style={styles.title}>Finca el paraíso</Text>
+        <Text style={styles.title}>Finca {farmName}</Text>
       </View>
 
       {/* Sección de "Labores asignadas" con el botón */}

@@ -14,15 +14,13 @@ const ResetPassword: React.FC = () => {
   const [alertMessage, setAlertMessage] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [matchError, setMatchError] = useState('');
-  const [loading, setLoading] = useState(false); // Estado para controlar la carga
+  const [loading, setLoading] = useState(false);
 
   const navigation = useNavigation();
   const route = useRoute();
 
-  // Asegúrate de que route.params no es undefined
-  const email = route.params?.email || '';  // Si no hay email, lo dejamos vacío
+  const email = route.params?.email || '';
 
-  // Validar que la contraseña cumpla con los requisitos
   const validatePassword = (password: string) => {
     const minLength = 12;
     const hasUpperCase = /[A-Z]/.test(password);
@@ -47,40 +45,39 @@ const ResetPassword: React.FC = () => {
   const handleSubmit = async () => {
     setPasswordError('');
     setMatchError('');
-    setLoading(true); // Mostrar el loader
-  
+    setLoading(true);
+
     const passwordValidationMessage = validatePassword(password);
     if (passwordValidationMessage) {
       setPasswordError(passwordValidationMessage);
-      setLoading(false); // Ocultar el loader en caso de error
+      setLoading(false);
       return;
     }
-  
+
     if (password !== confirmPassword) {
       setMatchError('Las contraseñas no coinciden.');
-      setLoading(false); // Ocultar el loader en caso de error
+      setLoading(false);
       return;
     }
-  
+
     try {
       const response = await axios.post('https://agroinsight-backend-production.up.railway.app/user/reset-password', {
         email,
         new_password: password,
       });
-  
-      setLoading(false); // Ocultar el loader después de la respuesta
-  
+
+      setLoading(false);
+
       if (response.status === 200) {
         setAlertMessage('Contraseña restablecida correctamente.');
         setAlertVisible(true);
-        setTimeout(() => navigation.navigate('Login'), 1000); // Navegar a la pantalla de login después de un corto retraso
+        setTimeout(() => navigation.navigate('Login'), 1000);
       } else {
         setAlertMessage('Error al restablecer la contraseña.');
         setAlertVisible(true);
       }
     } catch (error) {
-      setLoading(false); // Ocultar el loader en caso de error
-      // Captura y muestra el mensaje del backend si está disponible
+      setLoading(false);
       const backendMessage = error.response?.data?.error?.message || 'Hubo un error en la solicitud. Por favor, intenta de nuevo.';
       setAlertMessage(backendMessage);
       setAlertVisible(true);
@@ -144,13 +141,14 @@ const ResetPassword: React.FC = () => {
           Todos los derechos reservados. AgroInsight© 2024. v0.1.0
         </Text>
 
-        {/* Modal de alerta */}
+        {/* Modal de alerta con diseño similar a Login */}
         <Modal transparent={true} visible={alertVisible} animationType="fade">
           <View style={styles.overlay}>
             <View style={styles.alertContainer}>
+              <Text style={styles.alertTitle}>{alertMessage.includes('correctamente') ? '¡Éxito!' : 'Error'}</Text>
               <Text style={styles.alertText}>{alertMessage}</Text>
-              <TouchableOpacity style={styles.button} onPress={closeAlert}>
-                <Text style={styles.buttonText}>Aceptar</Text>
+              <TouchableOpacity style={styles.alertButton} onPress={closeAlert}>
+                <Text style={styles.alertButtonText}>Aceptar</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -257,19 +255,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  alertContainer: {
-    width: '80%',
-    padding: 20,
-    borderRadius: 10,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  alertText: {
-    fontSize: 16,
-    marginBottom: 20,
-  },
+  },  
   button: {
     backgroundColor: '#2d922b',
     paddingVertical: 10,
@@ -279,6 +265,55 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 16,
+  },
+  
+  errorText: {
+    color: 'red',
+    fontSize: 14,
+    marginTop: 5,
+  },
+  hintText: {
+    color: '#888',
+    fontSize: 12,
+  },
+  alertContainer: {
+    width: '80%',
+    padding: 25,
+    borderRadius: 15,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
+  },
+  alertTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2d922b',
+    marginBottom: 10,
+  },
+  alertText: {
+    fontSize: 16,
+    color: '#555',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  alertButton: {
+    backgroundColor: '#2d922b',
+    paddingVertical: 10,
+    paddingHorizontal: 40,
+    borderRadius: 25,
+  },
+  alertButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   loadingContainer: {
     alignItems: 'center',
@@ -290,15 +325,6 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 16,
     marginTop: 10,
-  },
-  errorText: {
-    color: 'red',
-    fontSize: 14,
-    marginTop: 5,
-  },
-  hintText: {
-    color: '#888',
-    fontSize: 12,
   },
 });
 

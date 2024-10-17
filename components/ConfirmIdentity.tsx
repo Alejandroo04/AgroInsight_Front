@@ -14,6 +14,7 @@ const ConfirmIdentity: React.FC = () => {
   const [code, setCode] = useState<string[]>(['', '', '', '']);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
+  const [isSuccess, setIsSuccess] = useState(false); // Estado para diferenciar entre éxito y error
   const [isLoading, setIsLoading] = useState(false);
 
   const inputRefs = [useRef<TextInput>(null), useRef<TextInput>(null), useRef<TextInput>(null), useRef<TextInput>(null)];
@@ -55,6 +56,7 @@ const ConfirmIdentity: React.FC = () => {
       });
 
       if (response.status === 200) {
+        setIsSuccess(true); // Marcar como éxito
         setAlertMessage('Usuario confirmado con éxito.');
         setAlertVisible(true);
         setTimeout(() => {
@@ -62,10 +64,12 @@ const ConfirmIdentity: React.FC = () => {
           navigation.navigate('Login');
         }, 3000); 
       } else {
+        setIsSuccess(false); // Marcar como error
         setAlertMessage('Error al confirmar usuario.');
         setAlertVisible(true);
       }
     } catch (error) {
+      setIsSuccess(false); // Marcar como error
       setAlertMessage('Hubo un error al confirmar tu identidad.');
       setAlertVisible(true);
     } finally {
@@ -75,11 +79,13 @@ const ConfirmIdentity: React.FC = () => {
 
   const handleResend = async () => {
     try {
-      await axios.post('https://agroinsight-backend-production.up.railway.app/user/resend-pin', {
+      await axios.post('https://agroinsight-backend-production.up.railway.app/user/resend-confirm-pin', {
         email: email,
       });
+      setIsSuccess(true); // Marcar como éxito
       setAlertMessage('Código reenviado con éxito.');
     } catch (error) {
+      setIsSuccess(false); // Marcar como error
       setAlertMessage('Error al reenviar el código.');
     }
     setAlertVisible(true);
@@ -149,8 +155,8 @@ const ConfirmIdentity: React.FC = () => {
           onRequestClose={closeAlert}
         >
           <View style={styles.centeredView}>
-            <View style={styles.errorModalView}>
-              <Icon name="close-circle" size={40} color="#fff" style={styles.errorIcon} />
+            <View style={isSuccess ? styles.successModalView : styles.errorModalView}>
+              <Icon name={isSuccess ? "check-circle" : "close-circle"} size={40} color="#fff" style={styles.icon} />
               <Text style={styles.alertText}>{alertMessage}</Text>
               <TouchableOpacity style={styles.errorButton} onPress={closeAlert}>
                 <Text style={styles.errorButtonText}>Aceptar</Text>
@@ -311,7 +317,20 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  errorIcon: {
+  successModalView: {
+    margin: 20,
+    backgroundColor: '#2d922b', // Verde para el modal de éxito
+    borderRadius: 10,
+    padding: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  icon: {
     marginBottom: 20,
   },
   alertText: {

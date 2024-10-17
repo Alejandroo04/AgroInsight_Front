@@ -28,7 +28,16 @@ const RegisterScreen: React.FC = () => {
   };
 
   const isValidPassword = (password: string) => {
-    return password.length >= 12;
+    const errors = [];
+    if (password.length < 12) errors.push('Debe tener al menos 12 caracteres.');
+    if (!/[A-Z]/.test(password)) errors.push('Debe tener al menos una letra mayúscula.');
+    if (!/\d/.test(password)) errors.push('Debe tener al menos un número.');
+    if (!/[!@#$%^&*()_+{}\[\]:;<>,.?~\\/-]/.test(password)) errors.push('Debe tener al menos un carácter especial.');
+    
+    return {
+      valid: errors.length === 0,
+      errors: errors
+    };
   };
 
   const handleNext = async () => {
@@ -45,8 +54,9 @@ const RegisterScreen: React.FC = () => {
       return;
     }
   
-    if (!isValidPassword(password)) {
-      setErrorMessage('La contraseña debe tener al menos 12 caracteres.');
+    const passwordValidation = isValidPassword(password);
+    if (!passwordValidation.valid) {
+      setErrorMessage(passwordValidation.errors.join('\n')); // Muestra todos los errores
       setModalVisible(true);
       return;
     }
@@ -243,7 +253,6 @@ const RegisterScreen: React.FC = () => {
     </KeyboardAvoidingView>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
