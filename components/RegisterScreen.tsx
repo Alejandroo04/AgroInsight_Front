@@ -17,8 +17,8 @@ const RegisterScreen: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [successModalVisible, setSuccessModalVisible] = useState(false); // Para manejar el modal de éxito
-  const [isLoading, setIsLoading] = useState(false); // Estado para manejar la carga
+  const [successModalVisible, setSuccessModalVisible] = useState(false); 
+  const [isLoading, setIsLoading] = useState(false); 
 
   const navigation = useNavigation();
 
@@ -40,8 +40,20 @@ const RegisterScreen: React.FC = () => {
     };
   };
 
+  // Función para remover emojis
+  const removeEmojis = (text: string) => {
+    return text.replace(
+      /([\u2700-\u27BF]|[\uE000-\uF8FF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2011-\u26FF]|[\u2900-\u297F])/g,
+      ''
+    );
+  };
+
+  // Función para remover números
+  const removeNumbers = (text: string) => {
+    return text.replace(/[0-9]/g, '');
+  };
+
   const handleNext = async () => {
-    // Validaciones previas...
     if (!nombre || !apellido || !email || !password || !confirmPassword) {
       setErrorMessage('Por favor, llena todos los campos.');
       setModalVisible(true);
@@ -56,7 +68,7 @@ const RegisterScreen: React.FC = () => {
   
     const passwordValidation = isValidPassword(password);
     if (!passwordValidation.valid) {
-      setErrorMessage(passwordValidation.errors.join('\n')); // Muestra todos los errores
+      setErrorMessage(passwordValidation.errors.join('\n'));
       setModalVisible(true);
       return;
     }
@@ -67,7 +79,6 @@ const RegisterScreen: React.FC = () => {
       return;
     }
   
-    // Iniciar la carga
     setIsLoading(true);
   
     try {
@@ -88,14 +99,12 @@ const RegisterScreen: React.FC = () => {
       }
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
-        // Extraer el mensaje de error específico de la API
         const apiErrorMessage = error.response.data?.error?.message || 'Error desconocido del servidor';
         setErrorMessage(apiErrorMessage);
       } else {
         setErrorMessage('Hubo un problema al crear el usuario. Inténtalo de nuevo.');
       }
       setModalVisible(true);
-      console.error('Error en la creación del usuario:', error);
     } finally {
       setIsLoading(false);
     }
@@ -104,6 +113,7 @@ const RegisterScreen: React.FC = () => {
   const navigateToLogin = () => {
     navigation.navigate('Login');
   };
+  
   const navigateToVerify = () => {
     navigation.navigate('VerifyAcount');
   };
@@ -123,8 +133,9 @@ const RegisterScreen: React.FC = () => {
           <TextInput
             style={styles.inputUnderline}
             value={nombre}
-            onChangeText={setNombre}
+            onChangeText={(text) => setNombre(removeEmojis(removeNumbers(text)))} // Remover emojis y números
             placeholderTextColor="gray"
+            maxLength={30}
           />
         </View>
 
@@ -133,8 +144,9 @@ const RegisterScreen: React.FC = () => {
           <TextInput
             style={styles.inputUnderline}
             value={apellido}
-            onChangeText={setApellido}
+            onChangeText={(text) => setApellido(removeEmojis(removeNumbers(text)))} // Remover emojis y números
             placeholderTextColor="gray"
+                        maxLength={30}
           />
         </View>
 
@@ -144,8 +156,9 @@ const RegisterScreen: React.FC = () => {
             style={styles.inputUnderline}
             keyboardType="email-address"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(text) => setEmail(removeEmojis(text))} // Remover emojis
             placeholderTextColor="gray"
+            maxLength={50}
           />
         </View>
 
@@ -156,7 +169,7 @@ const RegisterScreen: React.FC = () => {
               style={styles.inputUnderline}
               secureTextEntry={!showPassword}
               value={password}
-              onChangeText={setPassword}
+              onChangeText={(text) => setPassword(removeEmojis(text))} // Remover emojis
               placeholderTextColor="gray"
             />
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
@@ -175,7 +188,7 @@ const RegisterScreen: React.FC = () => {
               style={styles.inputUnderline}
               secureTextEntry={!showConfirmPassword}
               value={confirmPassword}
-              onChangeText={setConfirmPassword}
+              onChangeText={(text) => setConfirmPassword(removeEmojis(text))} // Remover emojis
               placeholderTextColor="gray"
             />
             <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
@@ -194,7 +207,6 @@ const RegisterScreen: React.FC = () => {
               Confirma tu cuenta aquí</Text>
           </TouchableOpacity>
         </View>
-
 
         <View style={styles.footer}>
           <TouchableOpacity onPress={navigateToLogin}>
@@ -220,7 +232,7 @@ const RegisterScreen: React.FC = () => {
           <TouchableOpacity
             style={styles.centeredView}
             activeOpacity={1}
-            onPressOut={() => setModalVisible(false)} // Cierra el modal al presionar fuera de él
+            onPressOut={() => setModalVisible(false)}
           >
             <View style={styles.errorModalView}>
               <Icon name="close-circle-outline" size={60} color="white" />
@@ -240,26 +252,23 @@ const RegisterScreen: React.FC = () => {
         >
           <View style={styles.centeredView}>
             <View style={styles.successModalView}>
-              <Icon name="check-circle-outline" size={60} color="white" />
+              <Icon name="check-circle-outline" size={60} color="green" />
               <Text style={styles.successText}>{successMessage}</Text>
             </View>
           </View>
         </Modal>
 
-        {/* Indicador de carga */}
         {isLoading && (
           <Modal
+            animationType="none"
             transparent={true}
             visible={isLoading}
-            animationType="none"
           >
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#4CAF50" />
-              <Text style={styles.loadingText}>Cargando...</Text>
+            <View style={styles.centeredView}>
+              <ActivityIndicator size="large" color="#0E6EB8" />
             </View>
           </Modal>
         )}
-
       </ScrollView>
     </KeyboardAvoidingView>
   );

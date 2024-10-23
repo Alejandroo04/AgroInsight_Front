@@ -10,12 +10,10 @@ import {
   ScrollView,
   Dimensions,
 } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import CustomDrawerContent from './CustomDrawerContent';
-import Header from './Header';
 import axios from 'axios';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import Header from './Header';
 
 const { width } = Dimensions.get('window');
 
@@ -27,7 +25,7 @@ const CreateFarms: React.FC = () => {
   const [unit, setUnit] = useState('Hectáreas (ha)');
   const [longitude, setLongitude] = useState('');
   const [latitude, setLatitude] = useState('');
-  const [pickerVisible, setPickerVisible] = useState(false);
+  const [isDropdownVisible, setDropdownVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [errors, setErrors] = useState<{
@@ -40,6 +38,8 @@ const CreateFarms: React.FC = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const { token } = route.params as { token: string };
+
+  const unitTypes = ['Hectáreas (ha)', 'Metros cuadrados (m²)', 'Kilómetros cuadrados (km²)'];
 
   const validateLatLong = () => {
     const newErrors: { latitude?: string; longitude?: string } = {};
@@ -112,18 +112,38 @@ const CreateFarms: React.FC = () => {
     }
   };
 
-  const handleOpenMenu = () => {
-    setDrawerVisible(true);
+  const handleLatitudeChange = (text: string) => {
+    const regex = /^\d*\.?\d*$/;
+
+    if (regex.test(text)) {
+      setLatitude(text);
+    }
   };
 
-  const handleCloseMenu = () => {
-    setDrawerVisible(false);
+  const handleAreaChange = (text: string) => {
+    const regex = /^\d*\.?\d*$/;
+
+    if (regex.test(text)) {
+      setArea(text);
+    }
+  };
+  
+  const handleLongitudeChange = (text: string) => {
+    const regex = /^\d*\.?\d*$/;
+
+    if (regex.test(text)) {
+      setLongitude(text);
+    }
+  };
+
+  const handleSelectUnitType = (type: string) => {
+    setUnit(type);
+    setDropdownVisible(false);
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header />
-
+      <Header/>
       <ScrollView contentContainerStyle={styles.formContainer}>
         <Text style={styles.title}>Crea tu finca</Text>
 
@@ -134,7 +154,7 @@ const CreateFarms: React.FC = () => {
           placeholder="Ingresa el nombre de la finca"
           value={name}
           onChangeText={setName}
-          maxLength={50}  // Limitar a 50 caracteres
+          maxLength={50}  
         />
         {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
 
@@ -145,41 +165,45 @@ const CreateFarms: React.FC = () => {
           placeholder="Ingresa la ubicación"
           value={location}
           onChangeText={setLocation}
-          maxLength={100}  // Limitar a 100 caracteres
+          maxLength={100} 
         />
         {errors.location && <Text style={styles.errorText}>{errors.location}</Text>}
 
         {/* Campo Área */}
         <Text style={styles.label}>* Área</Text>
-        <View style={styles.areaRow}>
-          <TextInput
-            style={[styles.input, styles.areaInput, !!errors.area && styles.errorInput]}
-            placeholder="Ingresa el área"
-            value={area}
-            keyboardType="numeric"  // Solo números
-            onChangeText={setArea}
-            maxLength={10}  // Limitar a 10 caracteres
-          />
-          <TouchableOpacity style={styles.pickerWrapper} onPress={() => setPickerVisible(!pickerVisible)}>
-            <Text style={styles.pickerText}>{unit}</Text>
-          </TouchableOpacity>
-        </View>
-        {pickerVisible && (
-          <View style={styles.pickerOverlay}>
-            <Picker
-              selectedValue={unit}
-              onValueChange={(itemValue) => {
-                setUnit(itemValue);
-                setPickerVisible(false);
-              }}
-            >
-              <Picker.Item label="Hectáreas (ha)" value="Hectáreas (ha)" />
-              <Picker.Item label="Metros cuadrados (m²)" value="Metros cuadrados (m²)" />
-              <Picker.Item label="Kilómetros cuadrados (km²)" value="Kilómetros cuadrados (km²)" />
-            </Picker>
+        <TextInput
+          style={[styles.input, !!errors.area && styles.errorInput]}
+          placeholder="Ingresa el área"
+          value={area}
+          keyboardType="numeric"
+          onChangeText={handleAreaChange}
+          maxLength={10}
+        />
+        {errors.area && <Text style={styles.errorText}>{errors.area}</Text>}
+
+        {/* Campo Unidad */}
+        <Text style={styles.label}>* Unidad de area</Text>
+        <TouchableOpacity
+          style={styles.dropdownButton}
+          onPress={() => setDropdownVisible(!isDropdownVisible)}
+        >
+          <Text style={styles.dropdownText}>{unit || 'Seleccione la unidad'}</Text>
+          <Ionicons name="chevron-down" size={24} color="#333" />
+        </TouchableOpacity>
+
+        {isDropdownVisible && (
+          <View style={styles.dropdownContent}>
+            {unitTypes.map((type, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.dropdownItem}
+                onPress={() => handleSelectUnitType(type)}
+              >
+                <Text style={styles.dropdownItemText}>{type}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
         )}
-        {errors.area && <Text style={styles.errorText}>{errors.area}</Text>}
 
         {/* Campo Latitud */}
         <Text style={styles.label}>Latitud </Text>
@@ -187,9 +211,9 @@ const CreateFarms: React.FC = () => {
           style={[styles.input, !!errors.latitude && styles.errorInput]}
           placeholder="Ingresa la latitud (Entre -90 y 90)"
           value={latitude}
-          onChangeText={setLatitude}
           keyboardType="numeric"
-          maxLength={15}  // Limitar a 15 caracteres
+          maxLength={15}
+          onChangeText={handleLatitudeChange}
         />
         {errors.latitude && <Text style={styles.errorText}>{errors.latitude}</Text>}
 
@@ -199,9 +223,9 @@ const CreateFarms: React.FC = () => {
           style={[styles.input, !!errors.longitude && styles.errorInput]}
           placeholder="Ingresa la longitud (Entre -180 y 180)"
           value={longitude}
-          onChangeText={setLongitude}
           keyboardType="numeric"
-          maxLength={15}  // Limitar a 15 caracteres
+          maxLength={15}
+          onChangeText={handleLongitudeChange}
         />
         {errors.longitude && <Text style={styles.errorText}>{errors.longitude}</Text>}
 
@@ -224,18 +248,10 @@ const CreateFarms: React.FC = () => {
           </View>
         </View>
       </Modal>
-
-      {/* Botón de menú hamburguesa en el footer */}
-      <TouchableOpacity style={styles.hamburgerButton} onPress={handleOpenMenu}>
-        <View style={styles.hamburgerLine} />
-        <View style={styles.hamburgerLine} />
-        <View style={styles.hamburgerLine} />
-      </TouchableOpacity>
-
-      <CustomDrawerContent isVisible={isDrawerVisible} onClose={handleCloseMenu} />
     </SafeAreaView>
   );
-};
+};  
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -243,85 +259,81 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     flexGrow: 1,
-    paddingHorizontal: width * 0.05, // 5% del ancho de la pantalla
+    paddingHorizontal: width * 0.05,
     paddingTop: 20,
   },
   title: {
-    fontSize: width * 0.07, // Ajusta el tamaño de fuente según el ancho
+    fontSize: width * 0.07,
     fontWeight: 'bold',
     color: '#4CAF50',
     textAlign: 'center',
     marginBottom: 20,
   },
   label: {
-    fontSize: width * 0.045, // Ajusta el tamaño de fuente según el ancho
+    fontSize: 16,
+    fontWeight: 'bold',
     color: '#333',
     marginBottom: 5,
-    fontWeight: 'bold',
   },
   input: {
-    borderBottomWidth: 1, // Línea inferior en lugar de borde completo
-    borderColor: '#ccc',
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    fontSize: width * 0.045, // Ajusta el tamaño de fuente según el ancho
-    marginBottom: 15,
-  },
-  errorInput: {
-    borderBottomColor: 'red',
-  },
-  errorText: {
-    color: 'red',
+    backgroundColor: '#f2f2f2',
+    padding: 15,
+    borderRadius: 10,
     marginBottom: 10,
-    fontSize: width * 0.04, // Ajusta el tamaño de fuente según el ancho
+    fontSize: 16,
   },
-  areaRow: {
+  dropdownButton: {
+    backgroundColor: '#f2f2f2',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  areaInput: {
-    flex: 1,
-    marginRight: 10, // Espacio entre el campo de entrada y el Picker
+  dropdownText: {
+    fontSize: 16,
+    color: '#333',
   },
-  pickerWrapper: {
-    flex: 1,
-    borderBottomWidth: 1, // Añadir línea inferior
-    borderColor: '#ccc',
-    paddingBottom: 5,
-  },
-  pickerText: {
-    fontSize: width * 0.045, // Ajusta el tamaño de fuente según el ancho
-    color: '#000', // Color del texto
-  },
-  pickerOverlay: {
-    position: 'absolute',
-    top: 100, // Ajusta la posición para que se despliegue justo debajo
-    left: 20,
-    right: 20,
-    zIndex: 1, // Se sobrepone sobre los otros elementos
+  dropdownContent: {
     backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
+    padding: 10,
+    borderRadius: 10,
+    elevation: 3,
+    marginBottom: 10,
+  },
+  dropdownItem: {
+    padding: 10,
+  },
+  dropdownItemText: {
+    fontSize: 16,
+    color: '#333',
   },
   createButton: {
+    backgroundColor: '#4CAF50',
+    padding: 15,
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#009707',
-    paddingVertical: 18,
-    paddingHorizontal: width * 0.2, // Ancho adaptado
+    marginTop: 20,
     borderRadius: 50,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.5,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+     paddingHorizontal: 40,
   },
   createButtonText: {
     color: '#fff',
-    fontSize: width * 0.045, // Ajusta el tamaño de fuente según el ancho
+    fontSize: 16,
     fontWeight: 'bold',
+    
+  },
+  errorText: {
+    color: 'red',
+    marginBottom: 10,
+  },
+  errorInput: {
+    borderColor: 'red',
+    borderWidth: 1,
   },
   modalContainer: {
     flex: 1,
@@ -330,29 +342,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalContent: {
+    width: width * 0.8,
     backgroundColor: '#fff',
     padding: 20,
-    borderRadius: 8,
+    borderRadius: 10,
     alignItems: 'center',
-    justifyContent: 'center',
-    width: '80%',
-  },
-  hamburgerButton: {
-    position: 'absolute',
-    bottom: 20,
-    left: '45%',
-    backgroundColor: '#4CAF50',
-    padding: 15,
-    borderRadius: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  hamburgerLine: {
-    width: 30,
-    height: 5,
-    backgroundColor: '#fff',
-    marginVertical: 2,
-    borderRadius: 2,
   },
 });
 

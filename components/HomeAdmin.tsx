@@ -4,23 +4,24 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import Header from './Header';
 import CustomDrawerContent from './CustomDrawerContent';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const HomeAdmin: React.FC = () => {
   const [userData, setUserData] = useState<{ nombre: string; apellido: string; rol: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDrawerVisible, setDrawerVisible] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
   const navigation = useNavigation();
-
-  const route = useRoute();
-  const token = route.params?.token;
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        if (token) {
+        const storedToken = await AsyncStorage.getItem('jwtToken');
+        if (storedToken) {
+          setToken(storedToken); // Set the token in state
           const response = await axios.get('https://agroinsight-backend-production.up.railway.app/user/me', {
             headers: {
-              Authorization: `Bearer ${token}`,
+              Authorization: `Bearer ${storedToken}`,
             },
           });
 
@@ -34,7 +35,7 @@ const HomeAdmin: React.FC = () => {
             setError('No se pudieron obtener los datos del usuario.');
           }
         } else {
-          navigation.navigate('Login');
+          navigation.navigate('Login'); // Navigate to Login if no token is found
         }
       } catch (err) {
         console.error('Error fetching user data:', err);
@@ -45,19 +46,6 @@ const HomeAdmin: React.FC = () => {
 
     fetchUserData();
   }, [token]);
-
-  // Bloquear el botón de retroceso en Android
-  useEffect(() => {
-    const backAction = () => {
-      return true; // Bloquea el comportamiento predeterminado de volver atrás
-    };
-
-    BackHandler.addEventListener('hardwareBackPress', backAction);
-
-    return () => {
-      BackHandler.removeEventListener('hardwareBackPress', backAction);
-    };
-  }, []);
 
   return (
     <SafeAreaView style={styles.container}>

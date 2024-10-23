@@ -1,25 +1,39 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, SafeAreaView, StyleSheet, Alert, ScrollView } from 'react-native';
-import { useRoute } from '@react-navigation/native'; // Importa useRoute
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, SafeAreaView, StyleSheet, Alert, ScrollView, Modal } from 'react-native';
+import { useRoute } from '@react-navigation/native';
 import axios from 'axios';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Header from './Header';
 
 const AssociateWorkers: React.FC = () => {
   const route = useRoute();
-  const { token, farmId } = route.params as { token: string; farmId: number }; // Obtén token y farmId
+  const { token, farmId } = route.params as { token: string; farmId: number };
 
   const [email, setEmail] = useState('');
   const [emailsList, setEmailsList] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Estado para los modales
+  const [modalSuccessVisible, setModalSuccessVisible] = useState(false);
+  const [modalErrorVisible, setModalErrorVisible] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(''); // Mensaje de error
+
   // Añadir un correo a la lista de correos
   const handleAddEmail = () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  
+    if (!emailRegex.test(email)) {
+      setErrorMessage('Por favor, introduce un correo electrónico válido.');
+      setModalErrorVisible(true); // Mostrar modal de error
+      return;
+    }
+  
     if (email && !emailsList.includes(email)) {
       setEmailsList([...emailsList, email]);
       setEmail(''); // Limpiar el campo
     } else {
-      Alert.alert('Error', 'El correo ya está añadido o es inválido.');
+      setErrorMessage('El correo ya está añadido o es inválido.');
+      setModalErrorVisible(true); // Mostrar modal de error
     }
   };
 
@@ -31,12 +45,10 @@ const AssociateWorkers: React.FC = () => {
   // Asociar los trabajadores
   const handleAssociateWorkers = async () => {
     if (emailsList.length === 0) {
-      Alert.alert('Error', 'Debes añadir al menos un correo.');
+      setErrorMessage('Debes añadir al menos un correo.');
+      setModalErrorVisible(true); // Mostrar modal de error
       return;
     }
-
-    console.log("Token utilizado:", token); // Verificar el token
-    console.log("Farm ID utilizado:", farmId); // Verificar el farmId
 
     setLoading(true);
 
@@ -55,7 +67,7 @@ const AssociateWorkers: React.FC = () => {
       );
 
       if (response.status === 200) {
-        Alert.alert('Éxito', response.data.message || 'Los trabajadores han sido asociados correctamente.');
+        setModalSuccessVisible(true); // Mostrar modal de éxito
         setEmailsList([]); // Limpiar la lista después de asociar
       }
     } catch (error) {
@@ -67,11 +79,17 @@ const AssociateWorkers: React.FC = () => {
         });
         Alert.alert('Error', errorMsg);
       } else {
-        Alert.alert('Error', `Hubo un problema al asociar los trabajadores: ${error.response?.data?.message || error.message}`);
+        setModalErrorVisible(true); // Mostrar modal de error
       }
     } finally {
       setLoading(false);
     }
+  };
+
+  // Función para cerrar los modales
+  const closeModal = () => {
+    setModalSuccessVisible(false);
+    setModalErrorVisible(false);
   };
 
   return (
@@ -114,11 +132,41 @@ const AssociateWorkers: React.FC = () => {
         </TouchableOpacity>
       </ScrollView>
 
-      <TouchableOpacity style={styles.hamburgerButton}>
-        <View style={styles.hamburgerLine} />
-        <View style={styles.hamburgerLine} />
-        <View style={styles.hamburgerLine} />
-      </TouchableOpacity>
+      
+
+      {/* Modal de éxito */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalSuccessVisible}
+        onRequestClose={closeModal}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.successModalView}>
+            <Text style={styles.successText}>¡Asociación exitosa!</Text>
+            <TouchableOpacity onPress={closeModal}>
+              <Text style={styles.modalButton}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal de error */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalErrorVisible}
+        onRequestClose={closeModal}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.errorModalView}>
+            <Text style={styles.errorText}>{errorMessage}</Text>
+            <TouchableOpacity onPress={closeModal}>
+              <Text style={styles.modalButton}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -211,6 +259,45 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     marginVertical: 2,
     borderRadius: 2,
+  },
+  modalBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Fondo semi-transparente
+  },
+  errorModalView: {
+    width: '80%',
+    backgroundColor: '#D32F2F',
+    padding: 20,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  errorText: {
+    color: 'white',
+    fontSize: 18,
+    textAlign: 'center',
+    marginTop: 10,
+  },
+  successModalView: {
+    width: '80%',
+    backgroundColor: 'green',
+    padding: 20,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  successText: {
+    color: 'white',
+    fontSize: 18,
+    textAlign: 'center',
+    marginTop: 10,
+  },
+  modalButton: {
+    color: 'white',
+    fontSize: 16,
+    marginTop: 20,
   },
 });
 

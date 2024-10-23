@@ -75,7 +75,7 @@ const Verification: React.FC = () => {
 
         setTimeout(() => {
           setAlertVisible(false);
-          navigation.navigate('Home');
+          navigation.navigate('HomeAdmin');
         }, 3000);
       } else {
         setAlertMessage('Código incorrecto.');
@@ -212,6 +212,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#2d922b',
     marginBottom: 5,
+    textAlign: 'center',
   },
   description: {
     fontSize: 15,

@@ -105,6 +105,7 @@ const LoginScreen: React.FC = () => {
                 autoCapitalize="none"
                 placeholder="Ejemplo@correo.com"
                 placeholderTextColor="gray"
+                maxLength={50}
               />
             </View>
 
@@ -118,6 +119,7 @@ const LoginScreen: React.FC = () => {
                   secureTextEntry={!showPassword}
                   placeholder="Tu contraseña"
                   placeholderTextColor="gray"
+                  maxLength={50}
                 />
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIconContainer}>
                   <Icon name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={24} color="gray" />

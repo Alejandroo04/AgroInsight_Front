@@ -1,35 +1,68 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Modal } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
+  Modal,
+  ScrollView,
+  Dimensions
+} from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import CustomDrawerContent from './CustomDrawerContent';
-import Header from './Header';
+import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import Header from './Header';
+
+const { width } = Dimensions.get('window');
 
 const CreatePlot: React.FC = () => {
-  const [isDrawerVisible, setDrawerVisible] = useState(false);
   const [name, setName] = useState('');
-  const [location, setLocation] = useState('');
   const [area, setArea] = useState('');
   const [unit, setUnit] = useState('Hectáreas (ha)');
   const [longitude, setLongitude] = useState('');
   const [latitude, setLatitude] = useState('');
-  const [pickerVisible, setPickerVisible] = useState(false);
+  const [isDropdownVisible, setDropdownVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
-  const [errors, setErrors] = useState<{ name?: string; location?: string; area?: string }>({});
+  const [errors, setErrors] = useState<{
+    name?: string;
+    area?: string;
+    latitude?: string;
+    longitude?: string;
+  }>({});
   const route = useRoute();
   const navigation = useNavigation();
   const { token, farmId } = route.params as { token: string; farmId: string };
 
+  const unitTypes = ['Hectáreas (ha)', 'Metros cuadrados (m²)', 'Kilómetros cuadrados (km²)'];
+
+  const validateLatLong = () => {
+    const newErrors: { latitude?: string; longitude?: string } = {};
+
+    if (latitude && (parseFloat(latitude) < -90 || parseFloat(latitude) > 90)) {
+      newErrors.latitude = 'La latitud debe estar entre -90 y 90';
+    }
+
+    if (longitude && (parseFloat(longitude) < -180 || parseFloat(longitude) > 180)) {
+      newErrors.longitude = 'La longitud debe estar entre -180 y 180';
+    }
+
+    return newErrors;
+  };
+
   const handleCreatePlot = async () => {
-    const newErrors: { name?: string; location?: string; area?: string } = {};
+    const newErrors: { name?: string; area?: string } = {};
+
     if (!name) newErrors.name = 'Este campo es requerido';
     if (!area) newErrors.area = 'Este campo es requerido';
 
-    setErrors(newErrors);
+    const latLongErrors = validateLatLong();
+    setErrors({ ...newErrors, ...latLongErrors });
 
-    if (Object.keys(newErrors).length === 0) {
+    if (Object.keys(newErrors).length === 0 && Object.keys(latLongErrors).length === 0) {
       const unitValue = unit === 'Hectáreas (ha)' ? 9 : unit === 'Metros cuadrados (m²)' ? 7 : 8;
 
       try {
@@ -49,7 +82,7 @@ const CreatePlot: React.FC = () => {
             },
           }
         );
-        
+
         setModalMessage('Lote creado exitosamente');
         setModalVisible(true);
 
@@ -57,9 +90,8 @@ const CreatePlot: React.FC = () => {
           setModalVisible(false);
           navigation.navigate('DetailsFarms', { token, farmId });
         }, 2000);
-
       } catch (error) {
-        console.error('Error creando lote:', error.response || error.message);
+        console.error('Error creando lote:', error);
         setModalMessage('Error al crear el lote');
         setModalVisible(true);
 
@@ -69,22 +101,44 @@ const CreatePlot: React.FC = () => {
       }
     }
   };
+  
+  const handleLatitudeChange = (text: string) => {
+    const regex = /^\d*\.?\d*$/;
 
-  const handleOpenMenu = () => {
-    setDrawerVisible(true);
+    if (regex.test(text)) {
+      setLatitude(text);
+    }
   };
 
-  const handleCloseMenu = () => {
-    setDrawerVisible(false);
+  const handleAreaChange = (text: string) => {
+    const regex = /^\d*\.?\d*$/;
+
+    if (regex.test(text)) {
+      setArea(text);
+    }
+  };
+  
+  const handleLongitudeChange = (text: string) => {
+    const regex = /^\d*\.?\d*$/;
+
+    if (regex.test(text)) {
+      setLongitude(text);
+    }
+  };
+
+
+  const handleSelectUnitType = (type: string) => {
+    setUnit(type);
+    setDropdownVisible(false);
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <Header />
-
-      <View style={styles.formContainer}>
+      <ScrollView contentContainerStyle={styles.formContainer}>
         <Text style={styles.title}>Crea tu lote</Text>
 
+        {/* Campo Nombre */}
         <Text style={styles.label}>* Nombre</Text>
         <TextInput
           style={[styles.input, !!errors.name && styles.errorInput]}
@@ -94,83 +148,81 @@ const CreatePlot: React.FC = () => {
         />
         {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
 
+        {/* Campo Área */}
         <Text style={styles.label}>* Área</Text>
-        <View style={styles.areaRow}>
-          <TextInput
-            style={[styles.input, styles.areaInput, !!errors.area && styles.errorInput]}
-            placeholder="Ingresa el área"
-            value={area}
-            keyboardType="numeric"
-            onChangeText={(text) => {
-              const numericText = text.replace(/[^0-9.]/g, ''); // Solo permite números y punto decimal
-              setArea(numericText);
-            }}
-          />
-          <TouchableOpacity style={styles.pickerWrapper} onPress={() => setPickerVisible(!pickerVisible)}>
-            <Text style={styles.pickerText}>{unit}</Text>
-          </TouchableOpacity>
-        </View>
-        
-        {pickerVisible && (
-          <View style={styles.pickerOverlay}>
-            <Picker
-              selectedValue={unit}
-              onValueChange={(itemValue) => {
-                setUnit(itemValue);
-                setPickerVisible(false);
-              }}
-            >
-              <Picker.Item label="Hectáreas (ha)" value="Hectáreas (ha)" />
-              <Picker.Item label="Metros cuadrados (m²)" value="Metros cuadrados (m²)" />
-              <Picker.Item label="Kilómetros cuadrados (km²)" value="Kilómetros cuadrados (km²)" />
-            </Picker>
+        <TextInput
+          style={[styles.input, !!errors.area && styles.errorInput]}
+          placeholder="Ingresa el área"
+          value={area}
+          keyboardType="numeric"
+          onChangeText={handleAreaChange}
+          maxLength={10}
+        />
+        {errors.area && <Text style={styles.errorText}>{errors.area}</Text>}
+
+        {/* Selector de Unidad */}
+        <Text style={styles.label}>* Unidad de área</Text>
+        <TouchableOpacity
+          style={styles.dropdownButton}
+          onPress={() => setDropdownVisible(!isDropdownVisible)}
+        >
+          <Text style={styles.dropdownText}>{unit || 'Seleccione la unidad'}</Text>
+          <Ionicons name="chevron-down" size={24} color="#333" />
+        </TouchableOpacity>
+
+        {isDropdownVisible && (
+          <View style={styles.dropdownContent}>
+            {unitTypes.map((type, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.dropdownItem}
+                onPress={() => handleSelectUnitType(type)}
+              >
+                <Text style={styles.dropdownItemText}>{type}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
         )}
 
-        {errors.area && <Text style={styles.errorText}>{errors.area}</Text>}
-
-        <Text style={styles.label}>Latitud</Text>
+        {/* Campo Latitud */}
+        <Text style={styles.label}>* Latitud</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, !!errors.latitude && styles.errorInput]}
           placeholder="Ingresa la latitud (Entre -90 y 90)"
           value={latitude}
-          onChangeText={(text) => {
-            const numericText = text.replace(/[^0-9.-]/g, ''); // Solo permite números, signo negativo y punto
-            setLatitude(numericText);
-          }}
+          keyboardType="numeric"
+          maxLength={15}
+          onChangeText={handleLatitudeChange}
         />
+        {errors.latitude && <Text style={styles.errorText}>{errors.latitude}</Text>}
 
-        <Text style={styles.label}>Longitud</Text>
+        {/* Campo Longitud */}
+        <Text style={styles.label}>* Longitud</Text>
         <TextInput
-          style={styles.input}
-          placeholder="Ingresa la longitud  (Entre -180 y 180)"
+          style={[styles.input, !!errors.longitude && styles.errorInput]}
+          placeholder="Ingresa la longitud (Entre -180 y 180)"
           value={longitude}
-          onChangeText={(text) => {
-            const numericText = text.replace(/[^0-9.-]/g, ''); // Solo permite números, signo negativo y punto
-            setLongitude(numericText);
-          }}
+          keyboardType="numeric"
+          maxLength={15}
+          onChangeText={handleLongitudeChange}
         />
+        {errors.longitude && <Text style={styles.errorText}>{errors.longitude}</Text>}
 
+        {/* Botón para crear lote */}
         <TouchableOpacity style={styles.createButton} onPress={handleCreatePlot}>
           <Text style={styles.createButtonText}>Crear lote</Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
 
+      {/* Modal para mostrar mensajes */}
       <Modal visible={modalVisible} transparent={true} animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
+            <Ionicons name="checkmark-circle" size={50} color="#4CAF50" />
             <Text>{modalMessage}</Text>
           </View>
         </View>
       </Modal>
-
-      <TouchableOpacity style={styles.hamburgerButton} onPress={handleOpenMenu}>
-        <View style={styles.hamburgerLine} />
-        <View style={styles.hamburgerLine} />
-        <View style={styles.hamburgerLine} />
-      </TouchableOpacity>
-
-      <CustomDrawerContent isVisible={isDrawerVisible} onClose={handleCloseMenu} />
     </SafeAreaView>
   );
 };
@@ -181,12 +233,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   formContainer: {
-    flex: 1,
-    paddingHorizontal: 20,
+    flexGrow: 1,
+    paddingHorizontal: width * 0.05,
     paddingTop: 20,
   },
   title: {
-    fontSize: 28,
+    fontSize: width * 0.07,
     fontWeight: 'bold',
     color: '#4CAF50',
     textAlign: 'center',
@@ -194,98 +246,80 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
+    fontWeight: 'bold',
     color: '#333',
     marginBottom: 5,
-    fontWeight: 'bold',
   },
   input: {
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    fontSize: 16,
-    marginBottom: 15,
-  },
-  errorInput: {
-    borderBottomColor: 'red',
-  },
-  errorText: {
-    color: 'red',
+    backgroundColor: '#f2f2f2',
+    padding: 15,
+    borderRadius: 10,
     marginBottom: 10,
+    fontSize: 16,
   },
-  areaRow: {
+  dropdownButton: {
+    backgroundColor: '#f2f2f2',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  areaInput: {
-    flex: 1,
-    marginRight: 10,
-  },
-  pickerWrapper: {
-    flex: 1,
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-    paddingBottom: 5,
-  },
-  pickerText: {
+  dropdownText: {
     fontSize: 16,
-    color: '#000',
+    color: '#333',
   },
-  pickerOverlay: {
-    position: 'absolute',
-    top: 100,
-    left: 20,
-    right: 20,
-    zIndex: 1,
+  dropdownContent: {
     backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
+    padding: 10,
+    borderRadius: 10,
+    elevation: 3,
+    marginBottom: 10,
+  },
+  dropdownItem: {
+    padding: 10,
+  },
+  dropdownItemText: {
+    fontSize: 16,
+    color: '#333',
   },
   createButton: {
+    backgroundColor: '#4CAF50',
+    padding: 15,
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#009707',
-    paddingVertical: 18,
-    paddingHorizontal: 120,
+    marginTop: 20,
     borderRadius: 50,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.5,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    paddingHorizontal: 40,
   },
   createButtonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
   },
+  errorInput: {
+    borderColor: 'red',
+    borderWidth: 1,
+  },
+  errorText: {
+    color: 'red',
+    marginBottom: 10,
+  },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    backgroundColor: 'white',
-    padding: 20,
+    backgroundColor: '#fff',
+    padding: 30,
     borderRadius: 10,
     alignItems: 'center',
-  },
-  hamburgerButton: {
-    position: 'absolute',
-    bottom: 20,
-    left: '45%',
-    backgroundColor: '#4CAF50',
-    padding: 10,
-    borderRadius: 25,
-  },
-  hamburgerLine: {
-    width: 30,
-    height: 3,
-    backgroundColor: '#fff',
-    marginVertical: 3,
   },
 });
 
