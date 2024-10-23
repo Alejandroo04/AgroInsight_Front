@@ -34,7 +34,7 @@ const CustomDrawerContent: React.FC<CustomDrawerContentProps> = ({ isVisible, on
           <TouchableWithoutFeedback>
             <View style={styles.drawerContent}>
               {/* Opción "Mi cuenta" */}
-              <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('SettingsCount')}>
+              <TouchableOpacity style={styles.drawerItem} >
                 <Icon name="person-outline" size={24} color="gold" style={styles.drawerIcon} />
                 <Text style={styles.drawerLabel}>Mi cuenta</Text>
               </TouchableOpacity>

@@ -104,6 +104,9 @@ const RegisterScreen: React.FC = () => {
   const navigateToLogin = () => {
     navigation.navigate('Login');
   };
+  const navigateToVerify = () => {
+    navigation.navigate('VerifyAcount');
+  };
 
   return (
     <KeyboardAvoidingView
@@ -184,13 +187,21 @@ const RegisterScreen: React.FC = () => {
         <Button mode="contained" style={styles.button} onPress={handleNext}>
           Siguiente
         </Button>
+        
+        <View style={styles.footer}>
+          <TouchableOpacity onPress={navigateToVerify}>
+            <Text style={styles.linkTwo}>¿Tu cuenta esta pendiente por verificación? {'\n'}
+              Confirma tu cuenta aquí</Text>
+          </TouchableOpacity>
+        </View>
+
 
         <View style={styles.footer}>
           <TouchableOpacity onPress={navigateToLogin}>
             <Text style={styles.link}>¿Tienes una cuenta? Inicia sesión</Text>
           </TouchableOpacity>
         </View>
-
+        
         <View style={styles.footer}>
           <Text style={styles.footerText}>
             Todos los derechos reservados. AgroInsight® 2024. v0.1.0
@@ -312,9 +323,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   link: {
-    marginTop: 40,
+    marginTop: 5,
     color: 'green',
-    fontWeight: 'bold',
+  },
+  linkTwo: {
+    marginTop: 10,
+    color: 'green',
+    textAlign: 'center',
   },
   footerText: {
     fontSize: 12,

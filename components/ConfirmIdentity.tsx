@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   errorButtonText: {
-    color: '#d32f2f',
+    color: 'black',
     fontWeight: 'bold',
   },
 });

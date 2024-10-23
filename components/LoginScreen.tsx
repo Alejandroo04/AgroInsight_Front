@@ -271,7 +271,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#4CAF50',
     marginBottom: 20,
-    textDecorationLine: 'underline',
   },
   loginButton: {
     alignItems: 'center',  
@@ -297,7 +296,6 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     marginTop: 20,
     marginBottom: 20,
-    textDecorationLine: 'underline',
   },
   footer: {
     alignItems: 'center',

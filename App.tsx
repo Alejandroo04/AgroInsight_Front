@@ -23,6 +23,7 @@ import ViewAssignedTasks from './components/ViewAssignedTasks';
 import AssignTask from './components/AssignTask';
 import MyTask from './components/MyTask';
 import DetailsTask from './components/DetailsTask';
+import VerifyAcount from './components/VerifiyAcount';
 
 const Stack = createStackNavigator();
 
@@ -53,6 +54,7 @@ export default function App() {
         <Stack.Screen name="AssignTask" component={AssignTask} options={{headerShown: false}}/>
         <Stack.Screen name="MyTask" component={MyTask} options={{headerShown: false}}/>
         <Stack.Screen name="DetailsTask" component={DetailsTask} options={{headerShown: false}}/>
+        <Stack.Screen name="VerifyAcount" component={VerifyAcount} options={{headerShown: false}}/>
         
       </Stack.Navigator>
     </NavigationContainer>
