@@ -24,6 +24,8 @@ import AssignTask from './components/AssignTask';
 import MyTask from './components/MyTask';
 import DetailsTask from './components/DetailsTask';
 import VerifyAcount from './components/VerifiyAcount';
+import ViewCrops from './components/ViewCrops';
+import CreateCrops from './components/CreateCrops';
 
 const Stack = createStackNavigator();
 
@@ -55,6 +57,9 @@ export default function App() {
         <Stack.Screen name="MyTask" component={MyTask} options={{headerShown: false}}/>
         <Stack.Screen name="DetailsTask" component={DetailsTask} options={{headerShown: false}}/>
         <Stack.Screen name="VerifyAcount" component={VerifyAcount} options={{headerShown: false}}/>
+        <Stack.Screen name="ViewCrops" component={ViewCrops} options={{headerShown: false}}/>
+        <Stack.Screen name="CreateCrops" component={CreateCrops} options={{headerShown: false}}/>
+        
         
       </Stack.Navigator>
     </NavigationContainer>

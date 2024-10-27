@@ -1,46 +1,50 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
-import axios from 'axios';
+import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import axios from 'axios';
 import CustomDrawerContent from './CustomDrawerContent';
 import Header from './Header';
-import { useRoute, useNavigation } from '@react-navigation/native';
 
-const ViewPlots: React.FC = () => {
+const ViewCrops: React.FC = () => {
   const [isDrawerVisible, setDrawerVisible] = useState(false);
-  const [plots, setPlots] = useState<any[]>([]);
+  const [crops, setCrops] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const navigation = useNavigation();
-
   const route = useRoute();
-  const { token, farmId, loteId } = route.params as { token: string; farmId: number, loteId: number };
+  const navigation = useNavigation();
+  const { token, loteId } = route.params as { token: string, loteId: number };
+  
 
-  // Obtener lotes de la finca con paginación
-  const fetchPlots = async (page: number) => {
+  const fetchCrops = async (page: number) => {
     try {
-      const response = await axios.get(`https://agroinsight-backend-production.up.railway.app/farm/${farmId}/plot/list`, {
+      const response = await axios.get(`https://agroinsight-backend-production.up.railway.app/crop/list`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        params: {
-          page,
-        },
       });
 
-      setPlots(response.data.plots);
+      console.log('Response from API:', response.data);
+      setCrops(Array.isArray(response.data.crops) ? response.data.crops : []);
       setTotalPages(response.data.total_pages);
     } catch (err) {
-      console.error('Error fetching plots:', err);
+      console.error('Error fetching crops:', err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchPlots(currentPage);
-  }, [token, farmId, currentPage]);
+    fetchCrops(currentPage);
+  }, [token, currentPage]);
+
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      fetchCrops(currentPage);
+    }, [currentPage, token])
+  );
 
   const handleOpenMenu = () => {
     setDrawerVisible(true);
@@ -48,6 +52,10 @@ const ViewPlots: React.FC = () => {
 
   const handleCloseMenu = () => {
     setDrawerVisible(false);
+  };
+
+  const handleCreateCrop = () => {
+    navigation.navigate('CreateCrops', { token, loteId });
   };
 
   const handleNextPage = () => {
@@ -62,31 +70,38 @@ const ViewPlots: React.FC = () => {
     }
   };
 
-  const handlePlotPress = (plotId: number) => {
-    navigation.navigate('ViewCrops', { token, loteId });
+  const handleCropPress = (cropId: number) => {
+    navigation.navigate('DetailsCrops', { token, cropId });
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <Header />
+
       <View style={styles.topRow}>
-        <Text style={styles.title}>Lotes Asociados</Text>
+        <Text style={styles.title}>Mis cultivos</Text>
+        <TouchableOpacity style={styles.addButton} onPress={handleCreateCrop}>
+          <Text style={styles.addButtonText}>+ Crear cultivo</Text>
+        </TouchableOpacity>
       </View>
 
       {loading ? (
-        <Text style={styles.loadingText}>Cargando lotes...</Text>
-      ) : plots.length > 0 ? (
+        <Text style={styles.loadingText}>Cargando cultivos...</Text>
+      ) : crops.length === 0 ? (
+        <Text style={styles.noCropsText}>
+          Aún no tienes registrado ningún cultivo, puedes hacerlo presionando el botón que se encuentra en la parte superior.
+        </Text>
+      ) : (
         <View>
-          {plots.map((plot) => (
-            <TouchableOpacity key={plot.id} style={styles.plotItem} onPress={() => handlePlotPress(plot.id)}>
-              <View style={styles.plotContent}>
-                <Text style={styles.plotName}>{plot.nombre}</Text>
+          {crops.map((crop) => (
+            <TouchableOpacity key={crop.id} style={styles.cropItem} onPress={() => handleCropPress(crop.id)}>
+              <View style={styles.cropContent}>
+                <Text style={styles.cropName}>{crop.nombre}</Text>
                 <Icon name="eye-outline" size={24} color="#4CAF50" style={styles.eyeIcon} />
               </View>
             </TouchableOpacity>
           ))}
 
-          {/* Paginación */}
           <View style={styles.pagination}>
             <TouchableOpacity onPress={handlePreviousPage} disabled={currentPage === 1}>
               <Text style={currentPage === 1 ? styles.disabledButton : styles.button}>‹</Text>
@@ -97,8 +112,6 @@ const ViewPlots: React.FC = () => {
             </TouchableOpacity>
           </View>
         </View>
-      ) : (
-        <Text style={styles.noPlotsText}>No hay lotes asociados a esta finca.</Text>
       )}
 
       <TouchableOpacity style={styles.hamburgerButton} onPress={handleOpenMenu}>
@@ -113,9 +126,10 @@ const ViewPlots: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  // Estilos iguales a ViewFarms, adaptados para ViewCrops
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fff',
   },
   topRow: {
     flexDirection: 'row',
@@ -125,17 +139,40 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#794A15',
-    textAlign: 'center',
+    color: '#4CAF50',
+  },
+  addButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 50,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+  },
+  addButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   loadingText: {
+    fontSize: 16,
+    color: '#666',
     textAlign: 'center',
-    marginTop: 20,
-    fontSize: 18,
+    paddingHorizontal: 20,
+    marginTop: 40,
   },
-  plotItem: {
+  noCropsText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    paddingHorizontal: 20,
+    marginTop: 40,
+  },
+  cropItem: {
     backgroundColor: '#f0fff0',
     borderRadius: 20,
     padding: 10,
@@ -147,13 +184,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  plotContent: {
+  cropContent: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     alignItems: 'center',
     flex: 1,
   },
-  plotName: {
+  cropName: {
     fontSize: 18,
     color: '#333',
     fontWeight: '500',
@@ -162,6 +199,7 @@ const styles = StyleSheet.create({
   },
   eyeIcon: {
     marginLeft: 10,
+    alignSelf: 'flex-end',
   },
   pagination: {
     flexDirection: 'row',
@@ -170,25 +208,18 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   button: {
-    fontSize: 24,
-    paddingHorizontal: 10,
+    fontSize: 20,
     color: '#4CAF50',
+    marginHorizontal: 10,
   },
   disabledButton: {
-    fontSize: 24,
-    paddingHorizontal: 10,
+    fontSize: 20,
     color: '#ccc',
+    marginHorizontal: 10,
   },
   pageNumber: {
-    fontSize: 18,
-    marginHorizontal: 10,
+    fontSize: 20,
     fontWeight: 'bold',
-  },
-  noPlotsText: {
-    textAlign: 'center',
-    marginTop: 20,
-    fontSize: 18,
-    color: '#777',
   },
   hamburgerButton: {
     position: 'absolute',
@@ -209,4 +240,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ViewPlots;
+export default ViewCrops;

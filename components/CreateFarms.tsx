@@ -112,14 +112,6 @@ const CreateFarms: React.FC = () => {
     }
   };
 
-  const handleLatitudeChange = (text: string) => {
-    const regex = /^\d*\.?\d*$/;
-
-    if (regex.test(text)) {
-      setLatitude(text);
-    }
-  };
-
   const handleAreaChange = (text: string) => {
     const regex = /^\d*\.?\d*$/;
 
@@ -128,13 +120,22 @@ const CreateFarms: React.FC = () => {
     }
   };
   
+  const handleLatitudeChange = (text: string) => {
+    const regex = /^-?\d*\.?\d*$/; // Permite números negativos y decimales
+  
+    if (regex.test(text)) {
+      setLatitude(text);
+    }
+  };
+  
   const handleLongitudeChange = (text: string) => {
-    const regex = /^\d*\.?\d*$/;
-
+    const regex = /^-?\d*\.?\d*$/; // Permite números negativos y decimales
+  
     if (regex.test(text)) {
       setLongitude(text);
     }
   };
+  
 
   const handleSelectUnitType = (type: string) => {
     setUnit(type);
@@ -243,7 +244,7 @@ const CreateFarms: React.FC = () => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Ionicons name="checkmark-circle" size={50} color="#4CAF50" /> 
+            {/* <Ionicons name="checkmark-circle" size={50} color="#4CAF50" />  */}
             <Text>{modalMessage}</Text>
           </View>
         </View>

@@ -1,39 +1,74 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, TextInput, ScrollView } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker'; // Asegúrate de tener este paquete
-import { useNavigation } from '@react-navigation/native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, TextInput, ScrollView, Modal } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import CustomDrawerContent from './CustomDrawerContent';
+import axios from 'axios';
+
 import Header from './Header';
 
 const AssignTask: React.FC = () => {
   const [isDrawerVisible, setDrawerVisible] = useState(false);
   const [isDropdownVisible, setDropdownVisible] = useState(false);
+  const [isPlotDropdownVisible, setPlotDropdownVisible] = useState(false);
   const [selectedTaskType, setSelectedTaskType] = useState('');
-  const [name, setName] = useState(''); // Nuevo estado para el nombre
+  const [selectedTaskTypeId, setSelectedTaskTypeId] = useState<number | null>(null);
+  const [selectedPlot, setSelectedPlot] = useState('');
+  const [selectedPlotId, setSelectedPlotId] = useState<number | null>(null);
+  const [plots, setPlots] = useState<any[]>([]);
+  const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [successModalVisible, setSuccessModalVisible] = useState(false); // Modal de éxito
+  const [errorModalVisible, setErrorModalVisible] = useState(false); // Modal de error
+  const [errorMessage, setErrorMessage] = useState(''); // Mensaje de error
   const navigation = useNavigation();
+  const route = useRoute();
+
+  const { token, farmId, workerId } = route.params as {
+    token: string;
+    farmId: number;
+    workerId: number;
+  };
 
   const taskTypes = ['Detección', 'Riego', 'Siembra', 'Control de maleza'];
-  const maxDescriptionLength = 200; // Límite de caracteres
+  const taskTypeIds: Record<string, number> = {
+    Detección: 16,
+    Riego: 4,
+    Siembra: 2,
+    'Control de maleza': 6,
+  };
+  
+  const maxDescriptionLength = 200;
 
-  const handleOpenMenu = () => {
-    setDrawerVisible(true);
+  const fetchPlots = async () => {
+    try {
+      const response = await axios.get(`https://agroinsight-backend-production.up.railway.app/farm/${farmId}/plot/list`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setPlots(response.data.plots);
+    } catch (err) {
+      console.error('Error fetching plots:', err);
+    }
   };
 
-  const handleCloseMenu = () => {
-    setDrawerVisible(false);
-  };
-
-  const handleAssignTask = () => {
-    console.log('Labor asignada');
-  };
+  useEffect(() => {
+    fetchPlots();
+  }, [token, farmId]);
 
   const handleSelectTaskType = (type: string) => {
     setSelectedTaskType(type);
+    setSelectedTaskTypeId(taskTypeIds[type] || null);
     setDropdownVisible(false);
+  };
+
+  const handleSelectPlot = (plotName: string, plotId: number) => {
+    setSelectedPlot(plotName);
+    setSelectedPlotId(plotId);
+    setPlotDropdownVisible(false);
   };
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
@@ -42,19 +77,68 @@ const AssignTask: React.FC = () => {
     setStartDate(currentDate);
   };
 
+  const handleAssignTask = async () => {
+    if (!selectedTaskTypeId || !selectedPlotId) {
+      console.error('Tipo de labor o lote no seleccionado');
+      return;
+    }
+  
+    const formattedStartDate = startDate.toISOString().split('T')[0];
+  
+    try {
+      const createTaskResponse = await axios.post(
+        'https://agroinsight-backend-production.up.railway.app/task/create',
+        {
+          nombre: name,
+          tipo_labor_id: selectedTaskTypeId,
+          fecha_inicio_estimada: formattedStartDate,
+          description,
+          estado_id: 1,
+          lote_id: selectedPlotId,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      const { task_id } = createTaskResponse.data;
+  
+      const assignTaskResponse = await axios.post(
+        'https://agroinsight-backend-production.up.railway.app/assignment/create',
+        {
+          usuario_ids: [workerId],
+          tarea_labor_cultural_id: task_id,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      setSuccessModalVisible(true); // Mostrar modal de éxito
+  
+    } catch (error) {
+      if (error.response) {
+        setErrorMessage(error.response.data.message || 'Error al asignar tarea');
+      } else {
+        setErrorMessage('Error de red o servidor');
+      }
+      setErrorModalVisible(true); // Mostrar modal de error
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header reutilizado */}
       <Header />
 
-      {/* Título de la pantalla */}
       <View style={styles.topRow}>
         <Text style={styles.title}>Asignar labor</Text>
       </View>
 
-      {/* Formulario de asignación */}
       <ScrollView contentContainerStyle={styles.formContainer}>
-        {/* Campo de nombre */}
         <Text style={styles.label}>* Nombre</Text>
         <TextInput
           style={styles.input}
@@ -90,7 +174,33 @@ const AssignTask: React.FC = () => {
           )}
         </View>
 
-        {/* Campo de descripción con límite de caracteres */}
+        <Text style={styles.label}>* Lote</Text>
+        <View style={styles.dropdown}>
+          <TouchableOpacity
+            style={styles.dropdownButton}
+            onPress={() => setPlotDropdownVisible(!isPlotDropdownVisible)}
+          >
+            <Text style={styles.dropdownText}>
+              {selectedPlot || 'Seleccione un lote'}
+            </Text>
+            <Icon name="chevron-down" size={24} color="#333" />
+          </TouchableOpacity>
+
+          {isPlotDropdownVisible && (
+            <View style={styles.dropdownContent}>
+              {plots.map((plot) => (
+                <TouchableOpacity
+                  key={plot.id}
+                  style={styles.dropdownItem}
+                  onPress={() => handleSelectPlot(plot.nombre, plot.id)}
+                >
+                  <Text style={styles.dropdownItemText}>{plot.nombre}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
+
         <Text style={styles.label}>* Descripción de la labor a realizar</Text>
         <TextInput
           style={styles.input}
@@ -126,15 +236,39 @@ const AssignTask: React.FC = () => {
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Botón de menú hamburguesa */}
-      <TouchableOpacity style={styles.hamburgerButton} onPress={handleOpenMenu}>
-        <View style={styles.hamburgerLine} />
-        <View style={styles.hamburgerLine} />
-        <View style={styles.hamburgerLine} />
-      </TouchableOpacity>
+      {/* Modal de éxito */}
+      <Modal visible={successModalVisible} transparent={true} animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalText}>¡Tarea asignada con éxito!</Text>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => {
+                setSuccessModalVisible(false);
+                navigation.navigate('DetailsWorks');
+              }}
+            >
+              <Text style={styles.modalButtonText}>Aceptar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
-      {/* Menú drawer */}
-      <CustomDrawerContent isVisible={isDrawerVisible} onClose={handleCloseMenu} />
+      {/* Modal de error */}
+      <Modal visible={errorModalVisible} transparent={true} animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalText}>Error: {errorMessage}</Text>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => setErrorModalVisible(false)}
+            >
+              <Text style={styles.modalButtonText}>Aceptar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 };
@@ -246,6 +380,34 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     marginVertical: 2,
     borderRadius: 2,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalText: {
+    fontSize: 18,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalButton: {
+    backgroundColor: '#007bff',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 16,
   },
 });
 

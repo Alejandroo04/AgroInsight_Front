@@ -58,13 +58,13 @@ const Verification: React.FC = () => {
   const handleSubmit = async () => {
     const submittedCode = code.join('');
     setLoading(true);
-
+  
     try {
       const response = await axios.post('https://agroinsight-backend-production.up.railway.app/user/login/verify', {
         email: email,
         pin: submittedCode,
       });
-
+  
       if (response.status === 200) {
         const { access_token } = response.data;
         await AsyncStorage.setItem('jwtToken', access_token);
@@ -72,11 +72,12 @@ const Verification: React.FC = () => {
         setAlertMessage('Verificación exitosa.');
         setAlertSuccess(true); // Éxito
         setAlertVisible(true);
-
+  
+        // Cerrar el modal y redirigir a HomeAdmin después de un breve retraso
         setTimeout(() => {
-          setAlertVisible(false);
+          setAlertVisible(false); // Cerrar el modal
           navigation.navigate('HomeAdmin');
-        }, 3000);
+        }, 2000); // Ajusta el tiempo según sea necesario
       } else {
         setAlertMessage('Código incorrecto.');
         setAlertSuccess(false); // Error
@@ -90,6 +91,7 @@ const Verification: React.FC = () => {
       setLoading(false);
     }
   };
+  
 
   const handleResend = async () => {
     setLoading(true);
@@ -109,13 +111,9 @@ const Verification: React.FC = () => {
     }
   };
 
-  const closeAlert = () => {
-    setAlertVisible(false);
-  };
-
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={styles.container} scrollEnabled={!loading}>
         <View style={styles.headerContainer}>
           <Header />
         </View>
@@ -179,8 +177,15 @@ const Verification: React.FC = () => {
             <View style={[styles.modalView, alertSuccess ? styles.successModal : styles.errorModal]}>
               <Icon name={alertSuccess ? 'check-circle' : 'alert-circle'} size={40} color="#fff" />
               <Text style={styles.alertText}>{alertMessage}</Text>
-              <TouchableOpacity style={styles.successButton} onPress={closeAlert}>
-                <Text style={styles.successButtonText}>Aceptar</Text>
+
+              {/* Mostrar el botón de cerrar para ambos casos (éxito y error) */}
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setAlertVisible(false)} // Cerrar el modal al presionar
+              >
+                <Text style={[styles.closeButtonText, { color: alertSuccess ? '#4CAF50' : '#ff0000' }]}>
+                  Cerrar
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -295,53 +300,40 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   footer: {
+    fontSize: 12,
+    color: '#888',
     textAlign: 'center',
-    color: '#2d922b',
-    marginTop: 20,
-    marginBottom: 10,
+    marginTop: 30,
   },
   centeredView: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   modalView: {
     width: 300,
-    backgroundColor: '#fff',
-    borderRadius: 10,
     padding: 20,
+    borderRadius: 20,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  errorModal: {
-    backgroundColor: '#ff3333',
   },
   successModal: {
     backgroundColor: '#4CAF50',
   },
+  errorModal: {
+    backgroundColor: '#ff0000',
+  },
   alertText: {
     color: '#fff',
     fontSize: 16,
-    marginVertical: 10,
+    marginTop: 15,
+    marginBottom: 10,
     textAlign: 'center',
   },
-  successButton: {
-    backgroundColor: '#fff',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
+  closeButton: {
     marginTop: 10,
   },
-  successButtonText: {
-    color: '#4CAF50',
+  closeButtonText: {
     fontSize: 16,
     fontWeight: 'bold',
   },

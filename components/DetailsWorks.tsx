@@ -35,7 +35,7 @@ const DetailsWorks: React.FC = () => {
   };
 
   const handleAssignTasks = () => {
-    navigation.navigate('AssignTask', { token, workerId });
+    navigation.navigate('AssignTask', { token, workerId, farmId });
   };
 
   const handleViewAssignedTasks = () => {
