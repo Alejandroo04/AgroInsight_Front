@@ -6,16 +6,17 @@ import CustomDrawerContent from './CustomDrawerContent';
 
 const MyTask: React.FC = () => {
   const [isDrawerVisible, setDrawerVisible] = useState(false);
-  const [tasks, setTasks] = useState([]);
-  const navigation = useNavigation();
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const route = useRoute();
-  const { token, workerId, farmName, farmId } = route.params as { farmName: string, token: string, userId: string, workerId: number, farmId: number };
+  const { token, userId, fincaId } = route.params as { token: string, userId: number, fincaId: number };
 
+  console.log(fincaId, userId)
 
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const response = await fetch(`https://agroinsight-backend-production.up.railway.app/farm/${farmId}/user/${workerId}/tasks/list`, {
+        const response = await fetch(`https://agroinsight-backend-production.up.railway.app/farm/${fincaId}/user/${userId}/tasks/list`, {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -24,7 +25,8 @@ const MyTask: React.FC = () => {
 
         const data = await response.json();
         console.log('tareas:', data);
-        setTasks(data.tasks); // Assuming `data` is an array of tasks
+        setTasks(Array.isArray(data.tasks) ? data.tasks : []);
+        setLoading(false);
 
       } catch (error) {
         console.error("Error fetching tasks:", error);
@@ -32,33 +34,53 @@ const MyTask: React.FC = () => {
     };
 
     fetchTasks();
-  }, [farmId, workerId, token]);
+  }, [fincaId, userId, token]);
 
+  const handleOpenMenu = () => {
+    setDrawerVisible(true);
+  };
+
+  const handleCloseMenu = () => {
+    setDrawerVisible(false);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Reutilizar el componente de Header */}
+      {/* Header */}
       <Header />
 
-      {/* Contenido principal */}
+      {/* Main Content */}
       <View style={styles.content}>
         <Text style={styles.title}>Mis labores</Text>
-        <Text style={styles.subtitle}>
-          Aún no tienes labores asignadas, espera a que tu empleador te asigne actividades.
-        </Text>
+
+        {loading ? (
+          <Text style={styles.loadingText}>Cargando labores...</Text>
+        ) : tasks.length === 0 ? (
+          <Text style={styles.noTasksText}>Aún no tienes labores asignadas.</Text>
+        ) : (
+          <View>
+            {tasks.map((task) => (
+              <TouchableOpacity key={task.id} style={styles.taskItem}>
+                <View style={styles.taskContent}>
+                  <Text style={styles.taskName}>{task.nombre}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </View>
 
-      {/* Botón de menú (Drawer) */}
+      {/* Menu Button (Drawer) */}
       <View style={styles.menuButtonContainer}>
-        <TouchableOpacity style={styles.menuButton} onPress={() => setDrawerVisible(true)}>
+        <TouchableOpacity style={styles.menuButton} onPress={handleOpenMenu}>
           <View style={styles.hamburgerLine} />
           <View style={styles.hamburgerLine} />
           <View style={styles.hamburgerLine} />
         </TouchableOpacity>
       </View>
 
-      {/* Drawer personalizado */}
-      <CustomDrawerContent isVisible={isDrawerVisible} onClose={() => setDrawerVisible(false)} />
+      {/* Custom Drawer */}
+      <CustomDrawerContent isVisible={isDrawerVisible} onClose={handleCloseMenu} />
     </SafeAreaView>
   );
 };
@@ -71,20 +93,51 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
     alignItems: 'center',
-    justifyContent: 'flex-start', // Cambiado para alinear el contenido en la parte superior
+    justifyContent: 'flex-start',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#4CAF50',
     marginBottom: 10,
-    marginTop: 20, // Espacio desde el header
+    marginTop: 20,
   },
-  subtitle: {
+  loadingText: {
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
-    marginTop: 10, // Espacio entre el título y el subtítulo
+    marginTop: 20,
+  },
+  noTasksText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  taskItem: {
+    backgroundColor: '#f0fff0',
+    borderRadius: 20,
+    padding: 10,
+    marginVertical: 10,
+    marginHorizontal: 20,
+    borderWidth: 1,
+    borderColor: '#4CAF50',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  taskContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flex: 1,
+  },
+  taskName: {
+    fontSize: 18,
+    color: '#333',
+    fontWeight: '500',
+    textAlign: 'center',
+    flex: 1,
   },
   menuButtonContainer: {
     position: 'absolute',

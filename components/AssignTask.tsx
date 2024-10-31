@@ -1,14 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, TextInput, ScrollView, Modal } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  SafeAreaView,
+  Modal,
+  ScrollView,
+  StyleSheet,
+} from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import axios from 'axios';
-
 import Header from './Header';
 
 const AssignTask: React.FC = () => {
-  const [isDrawerVisible, setDrawerVisible] = useState(false);
   const [isDropdownVisible, setDropdownVisible] = useState(false);
   const [isPlotDropdownVisible, setPlotDropdownVisible] = useState(false);
   const [selectedTaskType, setSelectedTaskType] = useState('');
@@ -20,9 +27,9 @@ const AssignTask: React.FC = () => {
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [successModalVisible, setSuccessModalVisible] = useState(false); // Modal de éxito
-  const [errorModalVisible, setErrorModalVisible] = useState(false); // Modal de error
-  const [errorMessage, setErrorMessage] = useState(''); // Mensaje de error
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const navigation = useNavigation();
   const route = useRoute();
 
@@ -43,16 +50,19 @@ const AssignTask: React.FC = () => {
     Siembra: 2,
     'Control de maleza': 6,
   };
-  
+
   const maxDescriptionLength = 200;
 
   const fetchPlots = async () => {
     try {
-      const response = await axios.get(`https://agroinsight-backend-production.up.railway.app/farm/${farmId}/plot/list`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axios.get(
+        `https://agroinsight-backend-production.up.railway.app/farm/${farmId}/plot/list`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       setPlots(response.data.plots);
     } catch (err) {
       console.error('Error fetching plots:', err);
@@ -81,14 +91,40 @@ const AssignTask: React.FC = () => {
     setStartDate(currentDate);
   };
 
-  const handleAssignTask = async () => {
-    if (!selectedTaskTypeId || !selectedPlotId) {
-      console.error('Tipo de labor o lote no seleccionado');
-      return;
+  const validateForm = () => {
+    if (!name.trim()) {
+      setErrorMessage('El nombre de la tarea es obligatorio.');
+      setErrorModalVisible(true);
+      return false;
     }
-  
+    if (!selectedTaskTypeId) {
+      setErrorMessage('Por favor, seleccione un tipo de labor.');
+      setErrorModalVisible(true);
+      return false;
+    }
+    if (!selectedPlotId) {
+      setErrorMessage('Por favor, seleccione un lote.');
+      setErrorModalVisible(true);
+      return false;
+    }
+    if (!description.trim()) {
+      setErrorMessage('La descripción de la tarea es obligatoria.');
+      setErrorModalVisible(true);
+      return false;
+    }
+    if (description.length > maxDescriptionLength) {
+      setErrorMessage(`La descripción no puede superar los ${maxDescriptionLength} caracteres.`);
+      setErrorModalVisible(true);
+      return false;
+    }
+    return true;
+  };
+
+  const handleAssignTask = async () => {
+    if (!validateForm()) return;
+
     const formattedStartDate = startDate.toISOString().split('T')[0];
-  
+
     try {
       const createTaskResponse = await axios.post(
         'https://agroinsight-backend-production.up.railway.app/task/create',
@@ -106,10 +142,10 @@ const AssignTask: React.FC = () => {
           },
         }
       );
-  
+
       const { task_id } = createTaskResponse.data;
-  
-      const assignTaskResponse = await axios.post(
+
+      await axios.post(
         'https://agroinsight-backend-production.up.railway.app/assignment/create',
         {
           usuario_ids: [workerId],
@@ -121,16 +157,15 @@ const AssignTask: React.FC = () => {
           },
         }
       );
-  
-      setSuccessModalVisible(true); // Mostrar modal de éxito
-  
+
+      setSuccessModalVisible(true);
     } catch (error) {
-      if (error.response) {
-        setErrorMessage(error.response.data.message || 'Error al asignar tarea');
+      if (error.response && error.response.data.message) {
+        setErrorMessage(error.response.data.message);
       } else {
-        setErrorMessage('Error de red o servidor');
+        setErrorMessage('Error de red o del servidor.');
       }
-      setErrorModalVisible(true); // Mostrar modal de error
+      setErrorModalVisible(true);
     }
   };
 
@@ -249,7 +284,7 @@ const AssignTask: React.FC = () => {
               style={styles.modalButton}
               onPress={() => {
                 setSuccessModalVisible(false);
-                navigation.navigate('DetailsWorks', {token,  nombre, apellido, email, estado} );
+                navigation.navigate('DetailsWorks', { token, nombre, apellido, email, estado });
               }}
             >
               <Text style={styles.modalButtonText}>Aceptar</Text>
@@ -272,83 +307,49 @@ const AssignTask: React.FC = () => {
           </View>
         </View>
       </Modal>
-
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-  },
-  topRow: {
-    padding: 20,
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#4CAF50',
-  },
-  formContainer: {
-    paddingHorizontal: 20,
-    marginTop: 10,
-  },
-  label: {
-    fontWeight: 'bold',
+  container: { flex: 1, backgroundColor: '#ffffff' },
+  topRow: { padding: 20, alignItems: 'center' },
+  title: { fontSize: 24, fontWeight: 'bold', color: '#4CAF50' },
+  formContainer: { paddingHorizontal: 20, marginTop: 10 },
+  label: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 5 },
+  input: {
+    backgroundColor: '#f2f2f2',
+    padding: 15,
+    borderRadius: 10,
     fontSize: 16,
     color: '#333',
-    marginVertical: 10,
-  },
-  input: {
-    flex: 1,
-    borderBottomWidth: 1,
-    borderBottomColor: 'gray',
-    paddingVertical: 10,
-    fontSize: 16,
+    marginBottom: 10,
   },
   dropdown: {
     marginBottom: 20,
     borderColor: '#ccc',
     borderWidth: 1,
     borderRadius: 30,
-    
   },
   dropdownButton: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 10,
+    padding: 15,
   },
-  dropdownText: {
-    fontSize: 16,
-  },
-  dropdownContent: {
-    borderTopWidth: 1,
-    borderColor: '#ccc',
-  },
-  dropdownItem: {
-    padding: 10,
-  },
-  dropdownItemText: {
-    fontSize: 16,
-  },
-  charCount: {
-    alignSelf: 'flex-end',
-    color: '#888',
-    marginBottom: 20,
-  },
+  dropdownText: { fontSize: 16, color: '#333' },
+  dropdownContent: { borderTopWidth: 1, borderColor: '#ccc' },
+  dropdownItem: { padding: 10 },
+  dropdownItemText: { fontSize: 16, color: '#333' },
+  charCount: { alignSelf: 'flex-end', color: '#888', marginBottom: 20 },
   datePickerButton: {
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 30,
-    padding: 10,
+    padding: 15,
     marginBottom: 20,
   },
-  datePickerText: {
-    fontSize: 16,
-  },
+  datePickerText: { fontSize: 16, color: '#333' },
   assignButton: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -363,28 +364,7 @@ const styles = StyleSheet.create({
     elevation: 8,
     marginTop: 10,
   },
-  assignButtonText: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  hamburgerButton: {
-    position: 'absolute',
-    bottom: 20,
-    left: '45%',
-    backgroundColor: '#4CAF50',
-    padding: 15,
-    borderRadius: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  hamburgerLine: {
-    width: 30,
-    height: 5,
-    backgroundColor: '#fff',
-    marginVertical: 2,
-    borderRadius: 2,
-  },
+  assignButtonText: { color: '#ffffff', fontSize: 18, fontWeight: 'bold' },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -393,26 +373,19 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: '80%',
-    backgroundColor: 'white',
+    backgroundColor: '#fff',
     padding: 20,
     borderRadius: 10,
     alignItems: 'center',
   },
-  modalText: {
-    fontSize: 18,
-    marginBottom: 20,
-    textAlign: 'center',
-  },
+  modalText: { fontSize: 18, marginBottom: 20, textAlign: 'center' },
   modalButton: {
     backgroundColor: '#007bff',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
   },
-  modalButtonText: {
-    color: '#fff',
-    fontSize: 16,
-  },
+  modalButtonText: { color: '#fff', fontSize: 16 },
 });
 
 export default AssignTask;

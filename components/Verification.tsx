@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   Modal,
   ActivityIndicator,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import axios from 'axios';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -28,10 +29,9 @@ const Verification: React.FC = () => {
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [loading, setLoading] = useState(false);
-  const [alertSuccess, setAlertSuccess] = useState(false); // Estado para diferenciar éxito/error
+  const [alertSuccess, setAlertSuccess] = useState(false);
 
   const email = route.params.email;
-
   const inputRefs = useRef<(TextInput | null)[]>([]);
 
   const handleInputChange = (index: number, value: string) => {
@@ -58,40 +58,42 @@ const Verification: React.FC = () => {
   const handleSubmit = async () => {
     const submittedCode = code.join('');
     setLoading(true);
-  
+
     try {
-      const response = await axios.post('https://agroinsight-backend-production.up.railway.app/user/login/verify', {
-        email: email,
-        pin: submittedCode,
-      });
-  
+      const response = await axios.post(
+        'https://agroinsight-backend-production.up.railway.app/user/login/verify',
+        {
+          email: email,
+          pin: submittedCode,
+        }
+      );
+
       if (response.status === 200) {
         const { access_token } = response.data;
         await AsyncStorage.setItem('jwtToken', access_token);
-        
+
         setAlertMessage('Verificación exitosa.');
-        setAlertSuccess(true); // Éxito
+        setAlertSuccess(true);
         setAlertVisible(true);
-  
+
         // Cerrar el modal y redirigir a HomeAdmin después de un breve retraso
         setTimeout(() => {
-          setAlertVisible(false); // Cerrar el modal
+          setAlertVisible(false);
           navigation.navigate('HomeAdmin');
-        }, 2000); // Ajusta el tiempo según sea necesario
+        }, 2000);
       } else {
         setAlertMessage('Código incorrecto.');
-        setAlertSuccess(false); // Error
+        setAlertSuccess(false);
         setAlertVisible(true);
       }
     } catch (error) {
       setAlertMessage('Hubo un error al verificar el código.');
-      setAlertSuccess(false); // Error
+      setAlertSuccess(false);
       setAlertVisible(true);
     } finally {
       setLoading(false);
     }
   };
-  
 
   const handleResend = async () => {
     setLoading(true);
@@ -100,11 +102,11 @@ const Verification: React.FC = () => {
         email: email,
       });
       setAlertMessage('Código reenviado con éxito.');
-      setAlertSuccess(true); // Éxito
+      setAlertSuccess(true);
       setAlertVisible(true);
     } catch (error) {
       setAlertMessage('Hubo un error al reenviar el código.');
-      setAlertSuccess(false); // Error
+      setAlertSuccess(false);
       setAlertVisible(true);
     } finally {
       setLoading(false);
@@ -167,28 +169,26 @@ const Verification: React.FC = () => {
           Todos los derechos reservados. AgroInsight© 2024. v0.1.0
         </Text>
 
-        {/* Modal de error y éxito */}
-        <Modal
-          transparent={true}
-          visible={alertVisible}
-          animationType="fade"
-        >
-          <View style={styles.centeredView}>
-            <View style={[styles.modalView, alertSuccess ? styles.successModal : styles.errorModal]}>
-              <Icon name={alertSuccess ? 'check-circle' : 'alert-circle'} size={40} color="#fff" />
-              <Text style={styles.alertText}>{alertMessage}</Text>
+        <Modal transparent={true} visible={alertVisible} animationType="fade">
+          <TouchableWithoutFeedback onPress={() => setAlertVisible(false)}>
+            <View style={styles.centeredView}>
+              <TouchableWithoutFeedback>
+                <View style={[styles.modalView, alertSuccess ? styles.successModal : styles.errorModal]}>
+                  <Icon name={alertSuccess ? 'check-circle' : 'alert-circle'} size={40} color="#fff" />
+                  <Text style={styles.alertText}>{alertMessage}</Text>
 
-              {/* Mostrar el botón de cerrar para ambos casos (éxito y error) */}
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setAlertVisible(false)} // Cerrar el modal al presionar
-              >
-                <Text style={[styles.closeButtonText, { color: alertSuccess ? '#4CAF50' : '#ff0000' }]}>
-                  Cerrar
-                </Text>
-              </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.closeButton}
+                    onPress={() => setAlertVisible(false)}
+                  >
+                    <Text style={[styles.closeButtonText, { color: alertSuccess ? '#4CAF50' : '#ff0000' }]}>
+                      Cerrar
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </TouchableWithoutFeedback>
             </View>
-          </View>
+          </TouchableWithoutFeedback>
         </Modal>
       </ScrollView>
     </SafeAreaView>

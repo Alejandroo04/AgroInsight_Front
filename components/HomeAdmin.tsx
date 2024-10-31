@@ -1,13 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Image, TouchableOpacity, BackHandler } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { View, Text, StyleSheet, SafeAreaView, Image, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import Header from './Header';
 import CustomDrawerContent from './CustomDrawerContent';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const HomeAdmin: React.FC = () => {
-  const [userData, setUserData] = useState<{ id: string, nombre: string; apellido: string; rol: string } | null>(null);
+  const [userData, setUserData] = useState<{
+    id: string;
+    nombre: string;
+    apellido: string;
+    rol: string;
+    fincaId: string; // Almacena el ID de la finca
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDrawerVisible, setDrawerVisible] = useState(false);
   const [token, setToken] = useState<string | null>(null);
@@ -26,18 +32,19 @@ const HomeAdmin: React.FC = () => {
           });
 
           if (response.status === 200) {
+            const fincaId = response.data.roles_fincas[0]?.finca || ''; // Extrae el ID de la finca
             setUserData({
               id: response.data.id,
               nombre: response.data.nombre,
               apellido: response.data.apellido,
               rol: response.data.rol,
-
+              fincaId, // Almacena el ID de la finca en userData
             });
           } else {
             setError('No se pudieron obtener los datos del usuario.');
           }
         } else {
-          navigation.navigate('Login'); // Navigate to Login if no token is found
+          navigation.navigate('Login'); // Navega a Login si no se encuentra el token
         }
       } catch (err) {
         console.error('Error fetching user data:', err);
@@ -85,17 +92,17 @@ const HomeAdmin: React.FC = () => {
               </View>
             </TouchableOpacity>
 
-            {/* Segundo card con el texto de la imagen */}
+            {/* Segundo card para "MyTask" con el ID del usuario y de la finca */}
             <TouchableOpacity
               style={styles.card}
               onPress={() => {
-                if (token) {
-                  navigation.navigate('MyTask', { token });
+                if (token && userData) {
+                  navigation.navigate('MyTask', { userId: userData.id, fincaId: userData.fincaId, token });
                 }
               }}
             >
               <Image
-                source={require('../assets/farm-icon.png')}  // Usa aquí tu icono correspondiente
+                source={require('../assets/farm-icon.png')}
                 style={styles.image}
               />
               <View style={styles.cardText}>
@@ -185,8 +192,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 5,
     elevation: 5,
-    marginBottom: 20, // Ajuste del margen inferior
-    height: 150, // Altura fija para que ambas cards tengan el mismo tamaño
+    marginBottom: 20,
+    height: 150,
   },
   image: {
     width: 80,

@@ -131,7 +131,14 @@ const handleCreateCrop = async () => {
   }
 };
 
+const handleDensityChange = (text) => {
+  // Remueve cualquier carácter que no sea un número o espacio, y aplica el formato de miles
+  const formattedText = text
+    .replace(/[^0-9]/g, '')         // Permite solo números
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ' '); // Inserta un espacio cada tres dígitos
   
+  setDensityValue(formattedText);
+};
 
   return (
     <SafeAreaView style={styles.container}>
@@ -165,7 +172,7 @@ const handleCreateCrop = async () => {
           placeholder="Ingrese el valor numérico"
           keyboardType="numeric"
           value={densityValue}
-          onChangeText={setDensityValue}
+          onChangeText={handleDensityChange}
         />
 
         <Text style={styles.label}>* Unidad de Densidad de Siembra</Text>

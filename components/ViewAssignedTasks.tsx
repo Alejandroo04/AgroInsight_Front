@@ -38,9 +38,19 @@ const ViewAssignedTasks: React.FC = () => {
     setDrawerVisible(true);
   };
 
+  // Navega al componente TaskDetail con los detalles específicos de la tarea
   const handleCropPress = (task) => {
-    navigation.navigate('TaskDetail', { task });
+    navigation.navigate('TaskDetail', {
+      nombre: task.nombre,
+      tipo_labor_id: task.tipo_labor_id,
+      fecha_inicio_estimada: task.fecha_inicio_estimada,
+      fecha_finalizacion: task.fecha_finalizacion,
+      descripcion: task.descripcion,
+      estado_id: task.estado_id,
+    });
   };
+
+  
 
   const handleCloseMenu = () => {
     setDrawerVisible(false);
