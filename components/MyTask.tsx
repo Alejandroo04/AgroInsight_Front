@@ -1,12 +1,39 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, SafeAreaView, StyleSheet, TouchableOpacity } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Header from './Header';
 import CustomDrawerContent from './CustomDrawerContent';
 
 const MyTask: React.FC = () => {
   const [isDrawerVisible, setDrawerVisible] = useState(false);
+  const [tasks, setTasks] = useState([]);
   const navigation = useNavigation();
+  const route = useRoute();
+  const { token, workerId, farmName, farmId } = route.params as { farmName: string, token: string, userId: string, workerId: number, farmId: number };
+
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const response = await fetch(`https://agroinsight-backend-production.up.railway.app/farm/${farmId}/user/${workerId}/tasks/list`, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await response.json();
+        console.log('tareas:', data);
+        setTasks(data.tasks); // Assuming `data` is an array of tasks
+
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+      }
+    };
+
+    fetchTasks();
+  }, [farmId, workerId, token]);
+
 
   return (
     <SafeAreaView style={styles.container}>

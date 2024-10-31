@@ -26,10 +26,14 @@ const AssignTask: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
 
-  const { token, farmId, workerId } = route.params as {
+  const { token, farmId, workerId, nombre, apellido, email, estado } = route.params as {
     token: string;
     farmId: number;
     workerId: number;
+    nombre: string;
+    apellido: string;
+    email: string;
+    estado: string;
   };
 
   const taskTypes = ['Detección', 'Riego', 'Siembra', 'Control de maleza'];
@@ -245,7 +249,7 @@ const AssignTask: React.FC = () => {
               style={styles.modalButton}
               onPress={() => {
                 setSuccessModalVisible(false);
-                navigation.navigate('DetailsWorks');
+                navigation.navigate('DetailsWorks', {token,  nombre, apellido, email, estado} );
               }}
             >
               <Text style={styles.modalButtonText}>Aceptar</Text>

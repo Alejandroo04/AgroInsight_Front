@@ -5,6 +5,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import CustomDrawerContent from './CustomDrawerContent';
 import Header from './Header';
 import { useRoute, useNavigation } from '@react-navigation/native';
+import { PortalContext } from 'react-native-paper/lib/typescript/components/Portal/PortalHost';
 
 const ViewPlots: React.FC = () => {
   const [isDrawerVisible, setDrawerVisible] = useState(false);
@@ -15,7 +16,7 @@ const ViewPlots: React.FC = () => {
   const navigation = useNavigation();
 
   const route = useRoute();
-  const { token, farmId, loteId } = route.params as { token: string; farmId: number, loteId: number };
+  const { token, farmId, plotId } = route.params as { token: string; farmId: number, plotId: number };
 
   // Obtener lotes de la finca con paginación
   const fetchPlots = async (page: number) => {
@@ -63,7 +64,9 @@ const ViewPlots: React.FC = () => {
   };
 
   const handlePlotPress = (plotId: number) => {
-    navigation.navigate('ViewCrops', { token, loteId });
+    console.log(plotId)
+  
+    navigation.navigate('ViewCrops', { token, plotId });
   };
 
   return (

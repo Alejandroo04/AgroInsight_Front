@@ -1,62 +1,83 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native'; // Importar useRoute
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import CustomDrawerContent from './CustomDrawerContent';
 import Header from './Header';
 
 const ViewAssignedTasks: React.FC = () => {
   const [isDrawerVisible, setDrawerVisible] = useState(false);
+  const [tasks, setTasks] = useState([]);
   const navigation = useNavigation();
-  const route = useRoute(); // Usar useRoute para acceder a los parámetros
-  const { farmName } = route.params as { farmName: string }; // Extraer farmName
+  const route = useRoute();
+  const { token, workerId, farmName, farmId } = route.params as { farmName: string, token: string, userId: string, workerId: number, farmId: number };
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const response = await fetch(`https://agroinsight-backend-production.up.railway.app/farm/${farmId}/user/${workerId}/tasks/list`, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await response.json();
+        console.log('tareas:', data);
+        setTasks(data.tasks); // Assuming `data.tasks` is an array of tasks
+
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+      }
+    };
+
+    fetchTasks();
+  }, [farmId, workerId, token]);
 
   const handleOpenMenu = () => {
     setDrawerVisible(true);
+  };
+
+  const handleCropPress = (task) => {
+    navigation.navigate('TaskDetail', { task });
   };
 
   const handleCloseMenu = () => {
     setDrawerVisible(false);
   };
 
-  const handleAssignTasks = () => {
-    // Aquí iría la navegación o acción para asignar labores
-    console.log("Asignar labores");
-  };
-
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header reutilizado */}
+      {/* Header */}
       <Header />
 
-      {/* Título de la pantalla */}
+      {/* Title */}
       <View style={styles.topRow}>
         <Text style={styles.title}>Finca {farmName}</Text>
       </View>
 
-      {/* Sección de "Labores asignadas" con el botón */}
-      <View style={styles.assignSection}>
-        <Text style={styles.sectionTitle}>Labores asignadas</Text>
-        <TouchableOpacity style={styles.assignButton} onPress={handleAssignTasks}>
-          <Icon name="briefcase" size={24} color="#ffffff" />
-        </TouchableOpacity>
-      </View>
+      {/* Task List */}
+      {Array.isArray(tasks) && tasks.length > 0 ? (
+        tasks.map((task) => (
+          <TouchableOpacity key={task.id} style={styles.taskItem} onPress={() => handleCropPress(task)}>
+            <View style={styles.cropContent}>
+              <Text style={styles.taskText}>{task.nombre}</Text>
+              <Icon name="eye-outline" size={24} color="#4CAF50" style={styles.eyeIcon} />
+            </View>
+          </TouchableOpacity>
+        ))
+      ) : (
+        <Text style={{ textAlign: 'center', marginTop: 20 }}>No hay tareas disponibles.</Text>
+      )}
 
-      {/* Descripción */}
-      <View style={styles.contentContainer}>
-        <Text style={styles.description}>
-          El trabajador aun <Text style={styles.workerName}></Text> no tiene labores asignadas, puedes hacerlo presionando el botón verde que se encuentra en la parte superior derecha.
-        </Text>
-      </View>
-
-      {/* Botón de menú hamburguesa */}
+      {/* Menu Button */}
       <TouchableOpacity style={styles.hamburgerButton} onPress={handleOpenMenu}>
         <View style={styles.hamburgerLine} />
         <View style={styles.hamburgerLine} />
         <View style={styles.hamburgerLine} />
       </TouchableOpacity>
 
-      {/* Menú drawer */}
+      {/* Drawer Menu */}
       <CustomDrawerContent isVisible={isDrawerVisible} onClose={handleCloseMenu} />
     </SafeAreaView>
   );
@@ -67,44 +88,39 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#ffffff',
   },
+  cropContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flex: 1,
+  },
   topRow: {
     padding: 20,
     alignItems: 'center',
+  },
+  eyeIcon: {
+    marginLeft: 10,
+    alignSelf: 'flex-end',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#4CAF50',
   },
-  assignSection: {
+  taskItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    marginTop: 10,
+    padding: 15,
+    marginHorizontal: 20,
+    marginVertical: 5,
+    borderWidth: 1,
+    borderRadius: 8,
+    borderColor: '#ddd',
   },
-  sectionTitle: {
-    fontSize: 20,
-    color: '#8B4513',
-  },
-  assignButton: {
-    backgroundColor: '#4CAF50',
-    padding: 12,
-    borderRadius: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 8,
-  },
-  contentContainer: {
-    paddingHorizontal: 20,
-    marginTop: 10,
-  },
-  description: {
+  taskText: {
     fontSize: 16,
     color: '#333',
-  },
-  workerName: {
-    fontWeight: 'bold',
   },
   hamburgerButton: {
     position: 'absolute',

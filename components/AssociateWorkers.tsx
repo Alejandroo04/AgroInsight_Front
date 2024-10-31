@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, SafeAreaView, StyleSheet, Alert, ScrollView, Modal } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, SafeAreaView, StyleSheet, ScrollView, Modal } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import axios from 'axios';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -14,26 +14,28 @@ const AssociateWorkers: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   // Estado para los modales
-  const [modalSuccessVisible, setModalSuccessVisible] = useState(false);
-  const [modalErrorVisible, setModalErrorVisible] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(''); // Mensaje de error
+  const [modalMessage, setModalMessage] = useState(''); // Mensaje de éxito o error
+  const [modalVisible, setModalVisible] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false); // Para definir el tipo de modal (éxito o error)
 
   // Añadir un correo a la lista de correos
   const handleAddEmail = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  
+
     if (!emailRegex.test(email)) {
-      setErrorMessage('Por favor, introduce un correo electrónico válido.');
-      setModalErrorVisible(true); // Mostrar modal de error
+      setModalMessage('Por favor, introduce un correo electrónico válido.');
+      setIsSuccess(false);
+      setModalVisible(true);
       return;
     }
-  
+
     if (email && !emailsList.includes(email)) {
       setEmailsList([...emailsList, email]);
       setEmail(''); // Limpiar el campo
     } else {
-      setErrorMessage('El correo ya está añadido o es inválido.');
-      setModalErrorVisible(true); // Mostrar modal de error
+      setModalMessage('El correo ya está añadido o es inválido.');
+      setIsSuccess(false);
+      setModalVisible(true);
     }
   };
 
@@ -45,8 +47,9 @@ const AssociateWorkers: React.FC = () => {
   // Asociar los trabajadores
   const handleAssociateWorkers = async () => {
     if (emailsList.length === 0) {
-      setErrorMessage('Debes añadir al menos un correo.');
-      setModalErrorVisible(true); // Mostrar modal de error
+      setModalMessage('Debes añadir al menos un correo.');
+      setIsSuccess(false);
+      setModalVisible(true);
       return;
     }
 
@@ -67,29 +70,35 @@ const AssociateWorkers: React.FC = () => {
       );
 
       if (response.status === 200) {
-        setModalSuccessVisible(true); // Mostrar modal de éxito
+        setModalMessage('¡Asociación exitosa!');
+        setIsSuccess(true);
+        setModalVisible(true);
         setEmailsList([]); // Limpiar la lista después de asociar
       }
-    } catch (error) {
-      if (error.response?.status === 422) {
-        const validationErrors = error.response.data?.detail || [];
-        let errorMsg = 'Errores de validación:\n';
-        validationErrors.forEach((err: any) => {
-          errorMsg += `\n- ${err.msg} en ${err.loc.join(' > ')}`;
-        });
-        Alert.alert('Error', errorMsg);
+    } catch (error: any) {
+      console.log('Respuesta completa del servidor:', error.response);
+
+      if (error.response) {
+        // Captura el mensaje exacto de error que devuelve la API
+        const serverErrorMessage = error.response.data?.error?.message || 'El correo no existe, por favor ingrese uno valido dentro de la aplicacion';
+        setModalMessage(serverErrorMessage);
+      } else if (error.request) {
+        setModalMessage('No se recibió respuesta del servidor.');
       } else {
-        setModalErrorVisible(true); // Mostrar modal de error
+        setModalMessage('Error en la solicitud.');
       }
+
+      setIsSuccess(false);
+      setModalVisible(true);
     } finally {
       setLoading(false);
     }
   };
 
-  // Función para cerrar los modales
+  // Función para cerrar el modal
   const closeModal = () => {
-    setModalSuccessVisible(false);
-    setModalErrorVisible(false);
+    setModalVisible(false);
+    setModalMessage(''); // Limpiar el mensaje
   };
 
   return (
@@ -132,35 +141,16 @@ const AssociateWorkers: React.FC = () => {
         </TouchableOpacity>
       </ScrollView>
 
-      
-
-      {/* Modal de éxito */}
+      {/* Modal de éxito o error */}
       <Modal
         animationType="slide"
         transparent={true}
-        visible={modalSuccessVisible}
+        visible={modalVisible}
         onRequestClose={closeModal}
       >
         <View style={styles.modalBackground}>
-          <View style={styles.successModalView}>
-            <Text style={styles.successText}>¡Asociación exitosa!</Text>
-            <TouchableOpacity onPress={closeModal}>
-              <Text style={styles.modalButton}>Cerrar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Modal de error */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalErrorVisible}
-        onRequestClose={closeModal}
-      >
-        <View style={styles.modalBackground}>
-          <View style={styles.errorModalView}>
-            <Text style={styles.errorText}>{errorMessage}</Text>
+          <View style={isSuccess ? styles.successModalView : styles.errorModalView}>
+            <Text style={isSuccess ? styles.successText : styles.errorText}>{modalMessage}</Text>
             <TouchableOpacity onPress={closeModal}>
               <Text style={styles.modalButton}>Cerrar</Text>
             </TouchableOpacity>
@@ -243,28 +233,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
   },
-  hamburgerButton: {
-    position: 'absolute',
-    bottom: 20,
-    left: '45%',
-    backgroundColor: '#4CAF50',
-    padding: 15,
-    borderRadius: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  hamburgerLine: {
-    width: 30,
-    height: 5,
-    backgroundColor: '#fff',
-    marginVertical: 2,
-    borderRadius: 2,
-  },
   modalBackground: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Fondo semi-transparente
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   errorModalView: {
     width: '80%',

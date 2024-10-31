@@ -14,25 +14,51 @@ const ViewCrops: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const route = useRoute();
   const navigation = useNavigation();
-  const { token, loteId } = route.params as { token: string, loteId: number };
+  const { token, plotId } = route.params as { token: string, plotId: number };
+
+ console.log(plotId);
   
 
   const fetchCrops = async (page: number) => {
     try {
-      const response = await axios.get(`https://agroinsight-backend-production.up.railway.app/crop/list`, {
+      const response = await axios.get(`https://agroinsight-backend-production.up.railway.app/plots/${plotId}/crops`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        params: {
+          page,
+        },
       });
 
-      console.log('Response from API:', response.data);
+      console.log('Response from API:', response.data.crops);
       setCrops(Array.isArray(response.data.crops) ? response.data.crops : []);
       setTotalPages(response.data.total_pages);
-    } catch (err) {
-      console.error('Error fetching crops:', err);
-    } finally {
       setLoading(false);
+    } catch (error) {
+      // Muestra el error completo si la solicitud falla
+      console.error('Error listando cultivos:', error);
+  
+      if (error.response) {
+        console.log('Código de estado:', error.response.status);
+        console.log('Encabezados:', error.response.headers);
+        console.log('Datos de respuesta:', error.response.data);
+  
+        // Extrae el mensaje del error y muéstralo en el modal
+        const errorMessage = error.response.data.message || 'Error desconocido al listar el cultivo';
+        setModalMessage(`Error: ${errorMessage}`);
+      } else {
+        // Si no hay una respuesta del backend (por ejemplo, problemas de red)
+        setModalMessage('Error de red o problema de conexión');
+      }
+
+  
+      setModalVisible(true);
+  
+      setTimeout(() => {
+        setModalVisible(false);
+      }, 2000);
     }
+    
   };
 
   useEffect(() => {
@@ -55,7 +81,7 @@ const ViewCrops: React.FC = () => {
   };
 
   const handleCreateCrop = () => {
-    navigation.navigate('CreateCrops', { token, loteId });
+    navigation.navigate('CreateCrops', { token, plotId });
   };
 
   const handleNextPage = () => {
@@ -87,7 +113,7 @@ const ViewCrops: React.FC = () => {
 
       {loading ? (
         <Text style={styles.loadingText}>Cargando cultivos...</Text>
-      ) : crops.length === 0 ? (
+      ) : crops.length == 0 ? (
         <Text style={styles.noCropsText}>
           Aún no tienes registrado ningún cultivo, puedes hacerlo presionando el botón que se encuentra en la parte superior.
         </Text>
@@ -96,8 +122,8 @@ const ViewCrops: React.FC = () => {
           {crops.map((crop) => (
             <TouchableOpacity key={crop.id} style={styles.cropItem} onPress={() => handleCropPress(crop.id)}>
               <View style={styles.cropContent}>
-                <Text style={styles.cropName}>{crop.nombre}</Text>
-                <Icon name="eye-outline" size={24} color="#4CAF50" style={styles.eyeIcon} />
+                <Text style={styles.cropName}>{crop.variedad_maiz_nombre}</Text>
+                {/* <Icon name="eye-outline" size={24} color="#4CAF50" style={styles.eyeIcon} /> */}
               </View>
             </TouchableOpacity>
           ))}

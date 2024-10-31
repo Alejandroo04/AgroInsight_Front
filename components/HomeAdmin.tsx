@@ -7,7 +7,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const HomeAdmin: React.FC = () => {
-  const [userData, setUserData] = useState<{ nombre: string; apellido: string; rol: string } | null>(null);
+  const [userData, setUserData] = useState<{ id: string, nombre: string; apellido: string; rol: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDrawerVisible, setDrawerVisible] = useState(false);
   const [token, setToken] = useState<string | null>(null);
@@ -27,9 +27,11 @@ const HomeAdmin: React.FC = () => {
 
           if (response.status === 200) {
             setUserData({
+              id: response.data.id,
               nombre: response.data.nombre,
               apellido: response.data.apellido,
               rol: response.data.rol,
+
             });
           } else {
             setError('No se pudieron obtener los datos del usuario.');
