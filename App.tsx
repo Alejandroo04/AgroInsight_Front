@@ -28,6 +28,7 @@ import ViewCrops from './components/ViewCrops';
 import CreateCrops from './components/CreateCrops';
 import TaskDetail from './components/TaskDetail';
 import { TermsAndConditions } from './components/TermsAndConditions';
+import TaskForUsers from './components/TaskForUsers';
 
 const Stack = createStackNavigator();
 
@@ -63,6 +64,7 @@ export default function App() {
         <Stack.Screen name="CreateCrops" component={CreateCrops} options={{headerShown: false}}/>
         <Stack.Screen name="TaskDetail" component={TaskDetail} options={{headerShown: false}}/>
         <Stack.Screen name="TermsAndConditions" component={TermsAndConditions} options={{headerShown: false}}/>
+        <Stack.Screen name="TaskForUsers" component={TaskForUsers} options={{headerShown: false}}/>
         
       </Stack.Navigator>
     </NavigationContainer>
