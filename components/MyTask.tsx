@@ -10,6 +10,7 @@ const MyTask: React.FC = () => {
   const [farms, setFarms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const route = useRoute();
+  const navigation = useNavigation(); // Inicializa la navegación
   const { token, userId, page } = route.params as { token: string, userId: number, page: number };
 
   useEffect(() => {
@@ -44,8 +45,21 @@ const MyTask: React.FC = () => {
     setDrawerVisible(false);
   };
 
+  const handleFarmPress = (farmId: number) => {
+    // Navega al componente TaskForUsers con los parámetros necesarios
+    navigation.navigate('TaskForUsers', {
+      farmId,
+      userId,
+      token,
+    });
+  };
+
   const farmList = farms.map((farm) => (
-    <TouchableOpacity key={farm.id} style={styles.farmItem}>
+    <TouchableOpacity 
+      key={farm.id} 
+      style={styles.farmItem} 
+      onPress={() => handleFarmPress(farm.id)} // Añade el evento onPress para navegar
+    >
       <View style={styles.farmContent}>
         <Text style={styles.farmName}>{farm.nombre}</Text>
       </View>
@@ -55,8 +69,6 @@ const MyTask: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <Header />
-      
-      
 
       <View style={styles.content}>
         <Text style={styles.title}>Mis fincas</Text>
