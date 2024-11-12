@@ -1,75 +1,66 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import Header from './Header';
 import axios from 'axios';
 
 const TaskForUsers: React.FC = () => {
   const route = useRoute();
-  const { farmId, userId, token, page } = route.params as { token: string, farmId: number, userId: number, page: number}; 
-  
-  console.log(token)
-  console.log(userId)
-  console.log(farmId)
-  // Obtener farmId y userId desde route.params
+  const { farmId, userId, token, page } = route.params as { token: string, farmId: number, userId: number, page: number }; 
 
-  // Estado para almacenar los datos de la tarea
-  const [taskData, setTaskData] = useState(null);
+  const [taskData, setTaskData] = useState<any[]>([]);
 
-  // Llamada al API para obtener los datos de la tarea
   useEffect(() => {
     const fetchTaskData = async () => {
-        try {
-            const response = await axios.get(`https://agroinsight-backend-production.up.railway.app/farms/${farmId}/worker/tasks`, {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-              params: {
-                page, 
-              },
-            });
-            
-            console.log(response);
-        
-        setTaskData(response.data.tasks); // Guardar los datos en el estado
+      try {
+        const response = await axios.get(`https://agroinsight-backend-production.up.railway.app/farms/${farmId}/worker/tasks`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          params: {
+            page, 
+          },
+        });
+        setTaskData(response.data.tasks);
       } catch (error) {
         console.error('Error fetching task data:', error);
       }
     };
 
     fetchTaskData();
-  }, [farmId, userId]);
+  }, [farmId, userId, token, page]);
 
   if (!taskData) {
-    return <Text>Loading...</Text>; // Mostrar mensaje de carga mientras se obtienen los datos
+    return <Text>Loading...</Text>;
   }
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <Header />
       <View style={styles.topRow}>
-        <Text style={styles.title}>Detalle de la tarea </Text>
+        <Text style={styles.title}>Detalle de la tarea</Text>
       </View>
+      
+      {taskData.map((task) => (
+        <View key={task.id} style={styles.taskContainer}>
+          <Text style={styles.title}>{task.nombre}</Text>
 
-      {/* Task Details */}
-      <View style={styles.taskContainer}>
-        <Text style={styles.title}>{taskData.nombre}</Text>
-
-        <View style={styles.row}>
-          <Image source={require('../assets/farms.png')} style={styles.image} />
-          <View style={styles.info}>
-            <Text style={styles.label}>Estado: {taskData.estado_id}</Text>
-            <Text style={styles.label}>Tipo de Labor: {taskData.tipo_labor_id}</Text>
-            <Text style={styles.label}>Fecha de Inicio Estimada: {taskData.fecha_inicio_estimada}</Text>
+          <View style={styles.row}>
+            <Image source={require('../assets/farms.png')} style={styles.image} />
+            <View style={styles.info}>
+              <Text style={styles.label}>Estado: {task.estado_id === 1 ? 'Pendiente' : 'Completado'}</Text>
+            </View>
           </View>
-        </View>
 
-        <Text style={styles.subtitle}>Fecha de Finalización: {taskData.fecha_finalizacion || 'Sin completar'}</Text>
-        
-        <Text style={styles.descriptionTitle}>Descripción:</Text>
-        <Text style={styles.descriptionItem}>{taskData.descripcion || 'No hay descripción disponible.'}</Text>
-      </View>
+
+          <Text style={styles.descriptionTitle}>Descripción:</Text>
+          <Text style={styles.descriptionItem}>{task.descripcion || 'No hay descripción disponible.'}</Text>
+
+          <TouchableOpacity style={styles.startButton}>
+            <Text style={styles.startButtonText}>{ task.estad }  Iniciar labor</Text>
+          </TouchableOpacity>
+        </View>
+      ))}
     </View>
   );
 };
@@ -98,8 +89,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   image: {
-    width: 60,
-    height: 60,
+    width: 100,
+    height: 100,
     marginRight: 10,
   },
   info: {
@@ -109,25 +100,39 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#A0522D',
+  startButton: {
+    alignItems: 'center',  
+    justifyContent: 'center',
+    backgroundColor: '#009707',
+    paddingVertical: 15,
+    paddingHorizontal: 40, // Ajuste en el tamaño del botón
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
     marginTop: 10,
+  },
+  startButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   descriptionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     marginTop: 10,
-  },
-  topRow: {
-    padding: 10,
-    alignItems: 'center',
-    fontSize: 20,
+    color: '#A0522D',
   },
   descriptionItem: {
     fontSize: 16,
     color: '#333',
     marginVertical: 2,
+  },
+  topRow: {
+    padding: 10,
+    alignItems: 'center',
   },
 });
 

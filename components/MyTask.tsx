@@ -47,7 +47,7 @@ const MyTask: React.FC = () => {
 
   const handleFarmPress = (farmId: number) => {
     // Navega al componente TaskForUsers con los parámetros necesarios
-    navigation.navigate('TaskForUsers', {
+    navigation.navigate('TaskListForFarm', {
       farmId,
       userId,
       token,
