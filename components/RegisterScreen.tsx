@@ -1,3 +1,5 @@
+// RegisterScreen.tsx
+
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Modal, ActivityIndicator, Platform, KeyboardAvoidingView } from 'react-native';
 import { Button } from 'react-native-paper';
@@ -19,6 +21,7 @@ const RegisterScreen: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [successModalVisible, setSuccessModalVisible] = useState(false); 
   const [isLoading, setIsLoading] = useState(false); 
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const navigation = useNavigation();
 
@@ -40,7 +43,6 @@ const RegisterScreen: React.FC = () => {
     };
   };
 
-  // Función para remover emojis
   const removeEmojis = (text: string) => {
     return text.replace(
       /([\u2700-\u27BF]|[\uE000-\uF8FF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2011-\u26FF]|[\u2900-\u297F])/g,
@@ -48,7 +50,6 @@ const RegisterScreen: React.FC = () => {
     );
   };
 
-  // Función para remover números
   const removeNumbers = (text: string) => {
     return text.replace(/[0-9]/g, '');
   };
@@ -59,36 +60,43 @@ const RegisterScreen: React.FC = () => {
       setModalVisible(true);
       return;
     }
-  
+
     if (!isValidEmail(email)) {
       setErrorMessage('Por favor, ingresa un correo electrónico válido.');
       setModalVisible(true);
       return;
     }
-  
+
     const passwordValidation = isValidPassword(password);
     if (!passwordValidation.valid) {
       setErrorMessage(passwordValidation.errors.join('\n'));
       setModalVisible(true);
       return;
     }
-  
+
     if (password !== confirmPassword) {
       setErrorMessage('Las contraseñas no coinciden.');
       setModalVisible(true);
       return;
     }
-  
+
+    if (!acceptedTerms) {
+      setErrorMessage('Debes aceptar los términos y condiciones para continuar.');
+      setModalVisible(true);
+      return;
+    }
+
     setIsLoading(true);
-  
+
     try {
       const response = await axios.post('https://agroinsight-backend-production.up.railway.app/user/register', {
         email,
         nombre,
         apellido,
         password,
+        acepta_terminos: acceptedTerms
       });
-  
+
       if (response.status === 200 || response.status === 201) {
         setSuccessMessage('Usuario creado con éxito.');
         setSuccessModalVisible(true);
@@ -113,7 +121,11 @@ const RegisterScreen: React.FC = () => {
   const navigateToLogin = () => {
     navigation.navigate('Login');
   };
-  
+
+  const navigateToTerms = () => {
+    navigation.navigate('TermsAndConditions');
+  };
+
   const navigateToVerify = () => {
     navigation.navigate('VerifyAcount');
   };
@@ -133,7 +145,7 @@ const RegisterScreen: React.FC = () => {
           <TextInput
             style={styles.inputUnderline}
             value={nombre}
-            onChangeText={(text) => setNombre(removeEmojis(removeNumbers(text)))} // Remover emojis y números
+            onChangeText={(text) => setNombre(removeEmojis(removeNumbers(text)))} 
             placeholderTextColor="gray"
             maxLength={30}
           />
@@ -144,9 +156,9 @@ const RegisterScreen: React.FC = () => {
           <TextInput
             style={styles.inputUnderline}
             value={apellido}
-            onChangeText={(text) => setApellido(removeEmojis(removeNumbers(text)))} // Remover emojis y números
+            onChangeText={(text) => setApellido(removeEmojis(removeNumbers(text)))} 
             placeholderTextColor="gray"
-                        maxLength={30}
+            maxLength={30}
           />
         </View>
 
@@ -156,7 +168,7 @@ const RegisterScreen: React.FC = () => {
             style={styles.inputUnderline}
             keyboardType="email-address"
             value={email}
-            onChangeText={(text) => setEmail(removeEmojis(text))} // Remover emojis
+            onChangeText={(text) => setEmail(removeEmojis(text))} 
             placeholderTextColor="gray"
             maxLength={50}
           />
@@ -169,7 +181,7 @@ const RegisterScreen: React.FC = () => {
               style={styles.inputUnderline}
               secureTextEntry={!showPassword}
               value={password}
-              onChangeText={(text) => setPassword(removeEmojis(text))} // Remover emojis
+              onChangeText={(text) => setPassword(removeEmojis(text))} 
               placeholderTextColor="gray"
             />
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
@@ -188,7 +200,7 @@ const RegisterScreen: React.FC = () => {
               style={styles.inputUnderline}
               secureTextEntry={!showConfirmPassword}
               value={confirmPassword}
-              onChangeText={(text) => setConfirmPassword(removeEmojis(text))} // Remover emojis
+              onChangeText={(text) => setConfirmPassword(removeEmojis(text))} 
               placeholderTextColor="gray"
             />
             <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
@@ -197,13 +209,22 @@ const RegisterScreen: React.FC = () => {
           </View>
         </View>
 
+        <View style={styles.termsContainer}>
+          <TouchableOpacity onPress={() => setAcceptedTerms(!acceptedTerms)}>
+            <Icon name={acceptedTerms ? 'checkbox-marked' : 'checkbox-blank-outline'} size={24} color="gray" />
+          </TouchableOpacity>
+          <Text style={styles.termsText}>
+            Acepto los <Text style={styles.linkText} onPress={navigateToTerms}>Términos y condiciones</Text>
+          </Text>
+        </View>
+
         <Button mode="contained" style={styles.button} onPress={handleNext}>
           Siguiente
         </Button>
-        
+
         <View style={styles.footer}>
           <TouchableOpacity onPress={navigateToVerify}>
-            <Text style={styles.linkTwo}>¿Tu cuenta esta pendiente por verificación? {'\n'}
+            <Text style={styles.linkTwo}>¿Tu cuenta está pendiente por verificación? {'\n'}
               Confirma tu cuenta aquí</Text>
           </TouchableOpacity>
         </View>
@@ -220,7 +241,6 @@ const RegisterScreen: React.FC = () => {
           </Text>
         </View>
 
-        {/* Modal de error */}
         <Modal
           animationType="fade"
           transparent={true}
@@ -241,7 +261,6 @@ const RegisterScreen: React.FC = () => {
           </TouchableOpacity>
         </Modal>
 
-        {/* Modal de éxito */}
         <Modal
           animationType="slide"
           transparent={true}
@@ -273,6 +292,7 @@ const RegisterScreen: React.FC = () => {
     </KeyboardAvoidingView>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -397,6 +417,20 @@ const styles = StyleSheet.create({
   loadingText: {
     color: 'white',
     marginTop: 10,
+  },
+  termsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  termsText: {
+    fontSize: 14,
+    color: 'gray',
+    marginLeft: 10,
+  },
+  linkText: {
+    color: 'blue',
+    textDecorationLine: 'underline',
   },
 });
 

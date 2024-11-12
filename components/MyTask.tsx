@@ -1,40 +1,41 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, SafeAreaView, StyleSheet, TouchableOpacity } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import Header from './Header';
 import CustomDrawerContent from './CustomDrawerContent';
+import axios from 'axios';
 
-const MyTask: React.FC = () => {
+const MyFarms: React.FC = () => {
   const [isDrawerVisible, setDrawerVisible] = useState(false);
-  const [tasks, setTasks] = useState<any[]>([]);
+  const [farms, setFarms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const route = useRoute();
-  const { token, userId, fincaId } = route.params as { token: string, userId: number, fincaId: number };
-
-  console.log(fincaId, userId)
+  const { token, userId, page } = route.params as { token: string, userId: number, page: number };
 
   useEffect(() => {
-    const fetchTasks = async () => {
+    const fetchFarms = async () => {
+      setLoading(true); // Set loading to true at the beginning of the fetch
       try {
-        const response = await fetch(`https://agroinsight-backend-production.up.railway.app/farm/${fincaId}/user/${userId}/tasks/list`, {
-          method: 'GET',
+        const response = await axios.get(`https://agroinsight-backend-production.up.railway.app/farm/worker/farms`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          params: {
+            page, 
+          },
         });
 
-        const data = await response.json();
-        console.log('tareas:', data);
-        setTasks(Array.isArray(data.tasks) ? data.tasks : []);
-        setLoading(false);
-
-      } catch (error) {
-        console.error("Error fetching tasks:", error);
+        setFarms(Array.isArray(response.data.farms) ? response.data.farms : []);
+        } catch (error) {
+        console.error("Error fetching farms:", error);
+      } finally {
+        setLoading(false); // Also set loading to false if there is an error
       }
+      fetchFarms()
     };
 
-    fetchTasks();
-  }, [fincaId, userId, token]);
+    fetchFarms();
+  }, [userId, token]);
 
   const handleOpenMenu = () => {
     setDrawerVisible(true);
@@ -48,21 +49,30 @@ const MyTask: React.FC = () => {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <Header />
+      <View>
+            {farms.map((farm) => (
+              <TouchableOpacity key={farm.id} style={styles.farmItem}>
+                <View style={styles.farmContent}>
+                  <Text style={styles.farmName}>{farm.nombre}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
 
       {/* Main Content */}
       <View style={styles.content}>
-        <Text style={styles.title}>Mis labores</Text>
+        <Text style={styles.title}>Mis fincas</Text>
 
         {loading ? (
-          <Text style={styles.loadingText}>Cargando labores...</Text>
-        ) : tasks.length === 0 ? (
-          <Text style={styles.noTasksText}>Aún no tienes labores asignadas.</Text>
+          <Text style={styles.loadingText}>Cargando fincas...</Text>
+        ) : farms.length > 0 ? (
+          <Text style={styles.noFarmsText}>Aún no tienes fincas asociadas.</Text>
         ) : (
           <View>
-            {tasks.map((task) => (
-              <TouchableOpacity key={task.id} style={styles.taskItem}>
-                <View style={styles.taskContent}>
-                  <Text style={styles.taskName}>{task.nombre}</Text>
+            {farms.map((farm) => (
+              <TouchableOpacity key={farm.id} style={styles.farmItem}>
+                <View style={styles.farmContent}>
+                  <Text style={styles.farmName}>{farm.nombre}</Text>
                 </View>
               </TouchableOpacity>
             ))}
@@ -108,13 +118,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 20,
   },
-  noTasksText: {
+  noFarmsText: {
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
     marginTop: 20,
   },
-  taskItem: {
+  farmItem: {
     backgroundColor: '#f0fff0',
     borderRadius: 20,
     padding: 10,
@@ -126,13 +136,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  taskContent: {
+  farmContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     flex: 1,
   },
-  taskName: {
+  farmName: {
     fontSize: 18,
     color: '#333',
     fontWeight: '500',
@@ -162,4 +172,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default MyTask;
+export default MyFarms;

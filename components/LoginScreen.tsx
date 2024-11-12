@@ -150,7 +150,7 @@ const LoginScreen: React.FC = () => {
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>
-              Todos los derechos reservados. AgroInsight® 2024. v0.1.0
+              Todos los derechos reservados. AgroInsight® 2024. v3.2.0
             </Text>
           </View>
 
