@@ -6,7 +6,12 @@ import axios from 'axios';
 
 const TaskForUsers: React.FC = () => {
   const route = useRoute();
-  const { farmId, userId, token, page } = route.params as { token: string, farmId: number, userId: number, page: number}; // Obtener farmId y userId desde route.params
+  const { farmId, userId, token, page } = route.params as { token: string, farmId: number, userId: number, page: number}; 
+  
+  console.log(token)
+  console.log(userId)
+  console.log(farmId)
+  // Obtener farmId y userId desde route.params
 
   // Estado para almacenar los datos de la tarea
   const [taskData, setTaskData] = useState(null);
@@ -15,7 +20,7 @@ const TaskForUsers: React.FC = () => {
   useEffect(() => {
     const fetchTaskData = async () => {
         try {
-            const response = await axios.get(`https://agroinsight-backend-production.up.railway.app/farm/${farmId}/user/${userId}/tasks/list`, {
+            const response = await axios.get(`https://agroinsight-backend-production.up.railway.app/farms/${farmId}/worker/tasks`, {
               headers: {
                 Authorization: `Bearer ${token}`,
               },
@@ -24,8 +29,9 @@ const TaskForUsers: React.FC = () => {
               },
             });
             
-        const data = await response.json();
-        setTaskData(data); // Guardar los datos en el estado
+            console.log(response);
+        
+        setTaskData(response.data.tasks); // Guardar los datos en el estado
       } catch (error) {
         console.error('Error fetching task data:', error);
       }

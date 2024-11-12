@@ -144,8 +144,9 @@ const AssignTask: React.FC = () => {
       );
 
       const { task_id } = createTaskResponse.data;
+      console.log(createTaskResponse.data);
 
-      await axios.post(
+      const response =  await axios.post(
         'https://agroinsight-backend-production.up.railway.app/assignment/create',
         {
           usuario_ids: [workerId],
@@ -157,9 +158,10 @@ const AssignTask: React.FC = () => {
           },
         }
       );
-
+      console.log(response)
       setSuccessModalVisible(true);
     } catch (error) {
+      
       if (error.response && error.response.data.message) {
         setErrorMessage(error.response.data.message);
       } else {

@@ -62,7 +62,7 @@ const LoginScreen: React.FC = () => {
         }, 3000);
       }
     } catch (error: any) {
-      console.log('Respuesta completa del servidor:', error.response);
+      
       if (error.response) {
         if (error.response.data && error.response.data.error && error.response.data.error.message) {
           setErrorMessage(error.response.data.error.message);
