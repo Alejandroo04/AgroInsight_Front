@@ -1,11 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, SafeAreaView, StyleSheet, TouchableOpacity } from 'react-native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Header from './Header';
 import CustomDrawerContent from './CustomDrawerContent';
 import axios from 'axios';
 
-const MyFarms: React.FC = () => {
+const MyTask: React.FC = () => {
   const [isDrawerVisible, setDrawerVisible] = useState(false);
   const [farms, setFarms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -14,7 +14,7 @@ const MyFarms: React.FC = () => {
 
   useEffect(() => {
     const fetchFarms = async () => {
-      setLoading(true); // Set loading to true at the beginning of the fetch
+      setLoading(true);
       try {
         const response = await axios.get(`https://agroinsight-backend-production.up.railway.app/farm/worker/farms`, {
           headers: {
@@ -26,12 +26,11 @@ const MyFarms: React.FC = () => {
         });
 
         setFarms(Array.isArray(response.data.farms) ? response.data.farms : []);
-        } catch (error) {
+      } catch (error) {
         console.error("Error fetching farms:", error);
       } finally {
-        setLoading(false); // Also set loading to false if there is an error
+        setLoading(false);
       }
-      fetchFarms()
     };
 
     fetchFarms();
@@ -45,42 +44,32 @@ const MyFarms: React.FC = () => {
     setDrawerVisible(false);
   };
 
+  const farmList = farms.map((farm) => (
+    <TouchableOpacity key={farm.id} style={styles.farmItem}>
+      <View style={styles.farmContent}>
+        <Text style={styles.farmName}>{farm.nombre}</Text>
+      </View>
+    </TouchableOpacity>
+  ));
+
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <Header />
-      <View>
-            {farms.map((farm) => (
-              <TouchableOpacity key={farm.id} style={styles.farmItem}>
-                <View style={styles.farmContent}>
-                  <Text style={styles.farmName}>{farm.nombre}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
+      
+      
 
-      {/* Main Content */}
       <View style={styles.content}>
         <Text style={styles.title}>Mis fincas</Text>
 
         {loading ? (
           <Text style={styles.loadingText}>Cargando fincas...</Text>
         ) : farms.length > 0 ? (
-          <Text style={styles.noFarmsText}>Aún no tienes fincas asociadas.</Text>
+          farmList
         ) : (
-          <View>
-            {farms.map((farm) => (
-              <TouchableOpacity key={farm.id} style={styles.farmItem}>
-                <View style={styles.farmContent}>
-                  <Text style={styles.farmName}>{farm.nombre}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <Text style={styles.noFarmsText}>Aún no tienes fincas asociadas.</Text>
         )}
       </View>
 
-      {/* Menu Button (Drawer) */}
       <View style={styles.menuButtonContainer}>
         <TouchableOpacity style={styles.menuButton} onPress={handleOpenMenu}>
           <View style={styles.hamburgerLine} />
@@ -89,7 +78,6 @@ const MyFarms: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Custom Drawer */}
       <CustomDrawerContent isVisible={isDrawerVisible} onClose={handleCloseMenu} />
     </SafeAreaView>
   );
@@ -172,4 +160,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default MyFarms;
+export default MyTask;
