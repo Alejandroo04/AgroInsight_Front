@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Header from './Header';
 import axios from 'axios';
 
 const TaskForUsers: React.FC = () => {
   const route = useRoute();
+  const navigation = useNavigation();
   const { farmId, userId, token, page } = route.params as { token: string, farmId: number, userId: number, page: number }; 
 
   const [taskData, setTaskData] = useState<any[]>([]);
@@ -34,6 +35,16 @@ const TaskForUsers: React.FC = () => {
     return <Text>Loading...</Text>;
   }
 
+  const handleStartTask = () => {
+    // Navigate to the Evidences component
+    navigation.navigate('Evidences', {
+      farmId,
+      userId,
+      token,
+      taskId: taskData.id, // pass the task id if necessary
+    });
+  };
+
   return (
     <View style={styles.container}>
       <Header />
@@ -52,12 +63,11 @@ const TaskForUsers: React.FC = () => {
             </View>
           </View>
 
-
           <Text style={styles.descriptionTitle}>Descripción:</Text>
           <Text style={styles.descriptionItem}>{task.descripcion || 'No hay descripción disponible.'}</Text>
 
-          <TouchableOpacity style={styles.startButton}>
-            <Text style={styles.startButtonText}>{ task.estad }  Iniciar labor</Text>
+          <TouchableOpacity style={styles.startButton} onPress={handleStartTask}>
+            <Text style={styles.startButtonText}>Iniciar labor</Text>
           </TouchableOpacity>
         </View>
       ))}
@@ -105,7 +115,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#009707',
     paddingVertical: 15,
-    paddingHorizontal: 40, // Ajuste en el tamaño del botón
+    paddingHorizontal: 40,
     borderRadius: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
