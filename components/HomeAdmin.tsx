@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Header from './Header';
 import CustomDrawerContent from './CustomDrawerContent';
@@ -59,62 +59,83 @@ const HomeAdmin: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <Header />
-      <View style={styles.content}>
-        {error ? (
-          <Text style={styles.errorText}>{error}</Text>
-        ) : userData ? (
-          <>
-            <Text style={styles.welcomeText}>Bienvenido</Text>
-            <View style={styles.userInfo}>
-              <View style={styles.avatar} />
-              <View style={styles.userDetails}>
-                <Text style={styles.userName}>{userData.nombre} {userData.apellido}</Text>
-                <Text style={styles.userRole}>Administrador de finca</Text>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.content}>
+          {error ? (
+            <Text style={styles.errorText}>{error}</Text>
+          ) : userData ? (
+            <>
+              <Text style={styles.welcomeText}>Bienvenido</Text>
+              <View style={styles.userInfo}>
+                <View style={styles.avatar} />
+                <View style={styles.userDetails}>
+                  <Text style={styles.userName}>{userData.nombre} {userData.apellido}</Text>
+                  <Text style={styles.userRole}>Administrador de finca</Text>
+                </View>
               </View>
-            </View>
 
-            {/* Primer card */}
-            <TouchableOpacity
-              style={styles.card}
-              onPress={() => {
-                if (token) {
-                  navigation.navigate('ViewFarms', { token });
-                }
-              }}
-            >
-              <Image
-                source={require('../assets/farm-icon.png')}
-                style={styles.image}
-              />
-              <View style={styles.cardText}>
-                <Text style={styles.title}>Gestiona ahora tus fincas</Text>
-                <Text style={styles.description}>En este módulo podrás gestionar tus fincas, acceder a tus lotes y cultivos.</Text>
-              </View>
-            </TouchableOpacity>
+              {/* Primer card */}
+              <TouchableOpacity
+                style={styles.card}
+                onPress={() => {
+                  if (token) {
+                    navigation.navigate('ViewFarms', { token });
+                  }
+                }}
+              >
+                <Image
+                  source={require('../assets/farm-icon.png')}
+                  style={styles.image}
+                />
+                <View style={styles.cardText}>
+                  <Text style={styles.title}>Gestiona ahora tus fincas</Text>
+                  <Text style={styles.description}>En este módulo podrás gestionar tus fincas, acceder a tus lotes y cultivos.</Text>
+                </View>
+              </TouchableOpacity>
 
-            {/* Segundo card para "MyTask" con el ID del usuario y de la finca */}
-            <TouchableOpacity
-              style={styles.card}
-              onPress={() => {
-                if (token && userData) {
-                  navigation.navigate('MyTask', { userId: userData.id, fincaId: userData.fincaId, token });
-                }
-              }}
-            >
-              <Image
-                source={require('../assets/farm-icon.png')}
-                style={styles.image}
-              />
-              <View style={styles.cardText}>
-                <Text style={styles.title}>Labores asignadas</Text>
-                <Text style={styles.description}>En este módulo podrás ver las labores que te han sido asignadas y ejecutarlas.</Text>
-              </View>
-            </TouchableOpacity>
-          </>
-        ) : (
-          <Text>Cargando datos del usuario...</Text>
-        )}
-      </View>
+              {/* Segundo card para "MyTask" con el ID del usuario y de la finca */}
+              <TouchableOpacity
+                style={styles.card}
+                onPress={() => {
+                  if (token && userData) {
+                    navigation.navigate('MyTask', { userId: userData.id, fincaId: userData.fincaId, token });
+                  }
+                }}
+              >
+                <Image
+                  source={require('../assets/work.png')}
+                  style={styles.image}
+                />
+                <View style={styles.cardText}>
+                  <Text style={styles.title}>Labores asignadas</Text>
+                  <Text style={styles.description}>En este módulo podrás ver las labores que te han sido asignadas y ejecutarlas.</Text>
+                </View>
+              </TouchableOpacity>
+
+              {/* Tercer card */}
+              <TouchableOpacity
+                style={styles.card}
+                onPress={() => {
+                  if (token) {
+                    navigation.navigate('CostsReport', { token });
+                  }
+                }}
+              >
+                <Image
+                  source={require('../assets/report.png')}
+                  style={styles.image}
+                />
+                <View style={styles.cardText}>
+                  <Text style={styles.title}>Generar reportes</Text>
+                  <Text style={styles.description}>En este módulo podrás generar tus reportes de costes asociados a las actividades realizadas.</Text>
+                </View>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <Text>Cargando datos del usuario...</Text>
+          )}
+        </View>
+      </ScrollView>
       <View style={styles.menuButtonContainer}>
         <TouchableOpacity style={styles.menuButton} onPress={() => setDrawerVisible(true)}>
           <View style={styles.hamburgerLine} />
@@ -133,10 +154,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f9f9f9',
   },
+  scrollContainer: {
+    paddingHorizontal: 20,
+  },
   content: {
-    padding: 20,
     alignItems: 'center',
-    flex: 1,
+    paddingBottom: 60, // Añade espacio para el botón de menú
   },
   welcomeText: {
     fontSize: 24,
@@ -181,7 +204,6 @@ const styles = StyleSheet.create({
   },
   card: {
     flexDirection: 'row',
-    width: '90%',
     backgroundColor: '#fff',
     borderRadius: 10,
     padding: 20,

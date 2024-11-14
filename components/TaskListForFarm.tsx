@@ -9,8 +9,8 @@ const TaskListForFarm: React.FC = () => {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const route = useRoute();
-  const navigation = useNavigation(); // Inicializa la navegación
-  const { farmId, token, userId } = route.params as { farmId: number, token: string, userId: string};
+  const navigation = useNavigation();
+  const { farmId, token, userId } = route.params as { farmId: number, token: string, userId: string };
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -33,21 +33,23 @@ const TaskListForFarm: React.FC = () => {
     fetchTasks();
   }, [farmId, token]);
 
-  const handleTaskPress = (taskId: number) => {
-    // Navega al componente TaskForUsers con los parámetros necesarios
+  const handleTaskPress = (task) => {
+    // Navega al componente TaskForUsers con la tarea específica como parámetro
     navigation.navigate('TaskForUsers', {
+      task,
       farmId,
-      taskId,
       token,
       userId,
     });
   };
 
+  console.log(token);
+
   const taskList = tasks.map((task) => (
     <TouchableOpacity 
       key={task.id} 
       style={styles.taskItem} 
-      onPress={() => handleTaskPress(task.id)} // Añade el evento onPress para navegar
+      onPress={() => handleTaskPress(task)}
     >
       <View style={styles.taskContent}>
         <Text style={styles.taskName}>{task.nombre}</Text>

@@ -33,6 +33,7 @@ import TaskListForFarm from './components/TaskListForFarm';
 import Evidences from './components/IA/Evidences';
 import CostRegister from './components/costs/CostRegister';
 import ViewResultsIA from './components/IA/ViewResultsIA';
+import CostsReport from './components/report/CostsReport';
 
 const Stack = createStackNavigator();
 
@@ -73,6 +74,7 @@ export default function App() {
         <Stack.Screen name="Evidences" component={Evidences} options={{headerShown: false}}/>
         <Stack.Screen name="CostRegister" component={CostRegister} options={{headerShown: false}}/>
         <Stack.Screen name="ViewResultsIA" component={ViewResultsIA} options={{headerShown: false}}/>
+        <Stack.Screen name="CostsReport" component={CostsReport} options={{headerShown: false}}/>
 
       </Stack.Navigator>
     </NavigationContainer>

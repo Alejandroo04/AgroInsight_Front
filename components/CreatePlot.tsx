@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
+import MapView, { Marker } from 'react-native-maps';
 import axios from 'axios';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Header from './Header';
@@ -22,8 +23,14 @@ const CreatePlot: React.FC = () => {
   const [name, setName] = useState('');
   const [area, setArea] = useState('');
   const [unit, setUnit] = useState('Hectáreas (ha)');
-  const [longitude, setLongitude] = useState('');
-  const [latitude, setLatitude] = useState('');
+  const [longitude, setLongitude] = useState(-122.4324);
+  const [latitude, setLatitude] = useState(37.78825);
+  const [region, setRegion] = useState({
+    latitude: 2.9273,
+    longitude: -75.2819,
+    latitudeDelta: 0.0922,
+    longitudeDelta: 0.0421,
+  });
   const [isDropdownVisible, setDropdownVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
@@ -42,11 +49,11 @@ const CreatePlot: React.FC = () => {
   const validateLatLong = () => {
     const newErrors: { latitude?: string; longitude?: string } = {};
 
-    if (latitude && (parseFloat(latitude) < -90 || parseFloat(latitude) > 90)) {
+    if (latitude && (latitude < -90 || latitude > 90)) {
       newErrors.latitude = 'La latitud debe estar entre -90 y 90';
     }
 
-    if (longitude && (parseFloat(longitude) < -180 || parseFloat(longitude) > 180)) {
+    if (longitude && (longitude < -180 || longitude > 180)) {
       newErrors.longitude = 'La longitud debe estar entre -180 y 180';
     }
 
@@ -102,25 +109,14 @@ const CreatePlot: React.FC = () => {
     }
   };
   
-  const handleLatitudeChange = (text: string) => {
-    const regex = /^-?\d*\.?\d*$/; // Permite números negativos y decimales
-  
-    if (regex.test(text)) {
-      setLatitude(text);
-    }
-  };
-  
-  const handleLongitudeChange = (text: string) => {
-    const regex = /^-?\d*\.?\d*$/; // Permite números negativos y decimales
-  
-    if (regex.test(text)) {
-      setLongitude(text);
-    }
+  const handleMapPress = (e: any) => {
+    const { latitude, longitude } = e.nativeEvent.coordinate;
+    setLatitude(latitude);
+    setLongitude(longitude);
   };
 
   const handleAreaChange = (text: string) => {
     const regex = /^\d*\.?\d*$/;
-
     if (regex.test(text)) {
       setArea(text);
     }
@@ -137,7 +133,6 @@ const CreatePlot: React.FC = () => {
       <ScrollView contentContainerStyle={styles.formContainer}>
         <Text style={styles.title}>Crea tu lote</Text>
 
-        {/* Campo Nombre */}
         <Text style={styles.label}>* Nombre</Text>
         <TextInput
           style={[styles.input, !!errors.name && styles.errorInput]}
@@ -147,7 +142,6 @@ const CreatePlot: React.FC = () => {
         />
         {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
 
-        {/* Campo Área */}
         <Text style={styles.label}>* Área</Text>
         <TextInput
           style={[styles.input, !!errors.area && styles.errorInput]}
@@ -159,7 +153,6 @@ const CreatePlot: React.FC = () => {
         />
         {errors.area && <Text style={styles.errorText}>{errors.area}</Text>}
 
-        {/* Selector de Unidad */}
         <Text style={styles.label}>* Unidad de área</Text>
         <TouchableOpacity
           style={styles.dropdownButton}
@@ -183,41 +176,27 @@ const CreatePlot: React.FC = () => {
           </View>
         )}
 
-        {/* Campo Latitud */}
-        <Text style={styles.label}>* Latitud</Text>
-        <TextInput
-          style={[styles.input, !!errors.latitude && styles.errorInput]}
-          placeholder="Ingresa la latitud (Entre -90 y 90)"
-          value={latitude}
-          keyboardType="numeric"
-          maxLength={15}
-          onChangeText={handleLatitudeChange}
-        />
-        {errors.latitude && <Text style={styles.errorText}>{errors.latitude}</Text>}
+        <Text style={styles.label}>Seleccione la ubicación en el mapa</Text>
+        <MapView
+          style={styles.map}
+          region={region}
+          onRegionChangeComplete={setRegion}
+          onPress={handleMapPress}
+        >
+          <Marker coordinate={{ latitude, longitude }} />
+        </MapView>
 
-        {/* Campo Longitud */}
-        <Text style={styles.label}>* Longitud</Text>
-        <TextInput
-          style={[styles.input, !!errors.longitude && styles.errorInput]}
-          placeholder="Ingresa la longitud (Entre -180 y 180)"
-          value={longitude}
-          keyboardType="numeric"
-          maxLength={15}
-          onChangeText={handleLongitudeChange}
-        />
-        {errors.longitude && <Text style={styles.errorText}>{errors.longitude}</Text>}
+        <Text style={styles.label}>Latitud: {latitude.toFixed(6)}</Text>
+        <Text style={styles.label}>Longitud: {longitude.toFixed(6)}</Text>
 
-        {/* Botón para crear lote */}
         <TouchableOpacity style={styles.createButton} onPress={handleCreatePlot}>
           <Text style={styles.createButtonText}>Crear lote</Text>
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Modal para mostrar mensajes */}
       <Modal visible={modalVisible} transparent={true} animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            {/* <Ionicons name="checkmark-circle" size={50} color="#4CAF50" /> */}
             <Text>{modalMessage}</Text>
           </View>
         </View>
@@ -227,99 +206,23 @@ const CreatePlot: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  formContainer: {
-    flexGrow: 1,
-    paddingHorizontal: width * 0.05,
-    paddingTop: 20,
-  },
-  title: {
-    fontSize: width * 0.07,
-    fontWeight: 'bold',
-    color: '#4CAF50',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 5,
-  },
-  input: {
-    backgroundColor: '#f2f2f2',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
-    fontSize: 16,
-  },
-  dropdownButton: {
-    backgroundColor: '#f2f2f2',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  dropdownText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  dropdownContent: {
-    backgroundColor: '#fff',
-    padding: 10,
-    borderRadius: 10,
-    elevation: 3,
-    marginBottom: 10,
-  },
-  dropdownItem: {
-    padding: 10,
-  },
-  dropdownItemText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  createButton: {
-    backgroundColor: '#4CAF50',
-    padding: 15,
-    alignItems: 'center',
-    marginTop: 20,
-    borderRadius: 50,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-    paddingHorizontal: 40,
-  },
-  createButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  errorInput: {
-    borderColor: 'red',
-    borderWidth: 1,
-  },
-  errorText: {
-    color: 'red',
-    marginBottom: 10,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    padding: 30,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
+  container: { flex: 1, backgroundColor: '#fff' },
+  formContainer: { flexGrow: 1, paddingHorizontal: width * 0.05, paddingTop: 20 },
+  title: { fontSize: width * 0.07, fontWeight: 'bold', color: '#4CAF50', textAlign: 'center', marginBottom: 20 },
+  label: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 5 },
+  input: { backgroundColor: '#f2f2f2', padding: 15, borderRadius: 10, marginBottom: 10, fontSize: 16 },
+  dropdownButton: { backgroundColor: '#f2f2f2', padding: 15, borderRadius: 10, marginBottom: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  dropdownText: { fontSize: 16, color: '#333' },
+  dropdownContent: { backgroundColor: '#fff', padding: 10, borderRadius: 10, elevation: 3, marginBottom: 10 },
+  dropdownItem: { padding: 10 },
+  dropdownItemText: { fontSize: 16, color: '#333' },
+  map: { width: width * 0.9, height: 300, borderRadius: 10, marginVertical: 20 },
+  createButton: { backgroundColor: '#4CAF50', padding: 15, alignItems: 'center', marginTop: 20, marginBottom: 20, borderRadius: 50, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 4.65, paddingHorizontal: 40 },
+  createButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  errorInput: { borderColor: 'red', borderWidth: 1 },
+  errorText: { color: 'red', marginBottom: 10 },
+  modalContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)' },
+  modalContent: { backgroundColor: '#fff', padding: 30, borderRadius: 10, alignItems: 'center' },
 });
 
 export default CreatePlot;

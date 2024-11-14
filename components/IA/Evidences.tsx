@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, SafeAreaView, StyleSheet, TouchableOpacity, Image, ScrollView, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  SafeAreaView,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
+  Modal
+} from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import Header from '../Header';
 import CustomDrawerContent from '../CustomDrawerContent';
@@ -8,9 +19,10 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 const Evidences: React.FC = () => {
   const [isDrawerVisible, setDrawerVisible] = useState(false);
   const [images, setImages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false); // Estado de carga
   const route = useRoute();
   const navigation = useNavigation();
-  const { token, taskId } = route.params as { token: string, taskId: number };
+  const { token, taskId, tipo_labor_id } = route.params as { token: string, taskId: number, tipo_labor_id: number };  
 
   useEffect(() => {
     console.log("Estado de imágenes:", images);
@@ -61,7 +73,7 @@ const Evidences: React.FC = () => {
     }
   };
 
-  const handleRemoveImage = (index) => {
+  const handleRemoveImage = (index: number) => {
     setImages((prevImages) => prevImages.filter((_, i) => i !== index));
   };
 
@@ -70,7 +82,7 @@ const Evidences: React.FC = () => {
       Alert.alert('Error', 'No hay imágenes para enviar.');
       return;
     }
-  
+
     const formData = new FormData();
     images.forEach((image, index) => {
       formData.append('files', {
@@ -80,23 +92,32 @@ const Evidences: React.FC = () => {
       });
     });
     formData.append('task_id', taskId);
-  
+
+    // Selección del endpoint basado en tipo_labor_id
+    const endpoint =
+      tipo_labor_id === 16
+        ? 'https://agroinsight-backend-production.up.railway.app/fall-armyworm/predict'
+        : 'https://agroinsight-backend-production.up.railway.app/soil-analysis/predict';
+
+    setIsLoading(true); // Activar el indicador de carga
     try {
-      const response = await fetch('https://agroinsight-backend-production.up.railway.app/fall-armyworm/predict', {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
         },
         body: formData,
       });
-  
+
       const responseData = await response.json();
       console.log("Respuesta del servidor:", responseData);
 
-      navigation.navigate('ViewResultsIA', { images, responseData });
+      navigation.navigate('ViewResultsIA', { images, responseData, taskId, token });
     } catch (error) {
       console.error("Error al enviar las imágenes:", error);
       Alert.alert('Error', 'No se pudieron enviar las imágenes.');
+    } finally {
+      setIsLoading(false); // Desactivar el indicador de carga
     }
   };
 
@@ -106,7 +127,7 @@ const Evidences: React.FC = () => {
       <View style={styles.content}>
         <Text style={styles.title}>Evidencias</Text>
         <Text style={styles.description}>
-          Para detectar el gusano cogollero, necesitamos imágenes de tu cultivo. Por favor, captura una foto o carga una imagen existente desde tu dispositivo.
+          Para detectar el gusano cogollero o analizar tu suelo, necesitamos imágenes de tu cultivo. Por favor, captura una foto o carga una imagen existente desde tu dispositivo.
         </Text>
 
         <View style={styles.buttonsContainer}>
@@ -139,6 +160,17 @@ const Evidences: React.FC = () => {
           </View>
         )}
       </View>
+
+      {/* Modal para mostrar el indicador de carga */}
+      {isLoading && (
+        <Modal transparent={true} animationType="fade">
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#4CAF50" />
+            <Text style={styles.loadingText}>Procesando, por favor espera...</Text>
+          </View>
+        </Modal>
+      )}
+
       <CustomDrawerContent isVisible={isDrawerVisible} onClose={handleCloseMenu} />
     </SafeAreaView>
   );
@@ -162,6 +194,17 @@ const styles = StyleSheet.create({
   removeButtonText: { color: '#fff', fontWeight: 'bold' },
   sendButton: { backgroundColor: '#4CAF50', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 20, marginTop: 15 },
   sendButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    color: '#fff',
+    fontSize: 16,
+    marginTop: 10,
+  },
 });
 
 export default Evidences;

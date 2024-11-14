@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -18,128 +18,102 @@ import Header from '../Header';
 const { width } = Dimensions.get('window');
 
 const CostRegister: React.FC = () => {
-    const [isDrawerVisible, setDrawerVisible] = useState(false);
     const [name, setName] = useState('');
-    const [location, setLocation] = useState('');
-    const [area, setArea] = useState('');
-    const [unit, setUnit] = useState('Hectáreas (ha)');
-    const [longitude, setLongitude] = useState('');
-    const [latitude, setLatitude] = useState('');
-    const [isDropdownVisible, setDropdownVisible] = useState(false);
-    const [modalVisible, setModalVisible] = useState(false);
-    const [modalMessage, setModalMessage] = useState('');
-    const [errors, setErrors] = useState<{
-        name?: string;
-        location?: string;
-        area?: string;
-        latitude?: string;
-        longitude?: string;
-    }>({});
+    const [hoursWorked, setHoursWorked] = useState('');
+    const [workersCount, setWorkersCount] = useState('');
+    const [useHours, setUseHours] = useState('');
+    const [inputQuantity, setInputQuantity] = useState('');
+    const [errors, setErrors] = useState({});
     const route = useRoute();
     const navigation = useNavigation();
-    const { token } = route.params as { token: string };
+    const { token, farm_id, task_id } = route.params as { token: string, farm_id: number, task_id: number };
 
-    const unitTypes = ['Hectáreas (ha)', 'Metros cuadrados (m²)', 'Kilómetros cuadrados (km²)'];
+    const [categories, setCategories] = useState([]);
+    const [inputs, setInputs] = useState([]);
+    const [machinery, setMachinery] = useState([]);
+    const [selectedCategory, setSelectedCategory] = useState(null);
+    const [selectedInput, setSelectedInput] = useState(null);
+    const [selectedMachinery, setSelectedMachinery] = useState(null);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [modalMessage, setModalMessage] = useState('');
 
-    const validateLatLong = () => {
-        const newErrors: { latitude?: string; longitude?: string } = {};
+    // Dropdown visibility states
+    const [isMachineryDropdownVisible, setMachineryDropdownVisible] = useState(false);
+    const [isCategoryDropdownVisible, setCategoryDropdownVisible] = useState(false);
+    const [isInputDropdownVisible, setInputDropdownVisible] = useState(false);
 
-        if (latitude && (parseFloat(latitude) < -90 || parseFloat(latitude) > 90)) {
-            newErrors.latitude = 'La latitud debe estar entre -90 y 90';
-        }
-
-        if (longitude && (parseFloat(longitude) < -180 || parseFloat(longitude) > 180)) {
-            newErrors.longitude = 'La longitud debe estar entre -180 y 180';
-        }
-
-        return newErrors;
-    };
-
-    const handleCreateFarm = async () => {
-        const newErrors: {
-            name?: string;
-            location?: string;
-            area?: string;
-            latitude?: string;
-            longitude?: string;
-        } = {};
-
-        if (!name) newErrors.name = 'Este campo es requerido';
-        if (!location) newErrors.location = 'Este campo es requerido';
-        if (!area) newErrors.area = 'Este campo es requerido';
-
-        const latLongErrors = validateLatLong();
-        setErrors({ ...newErrors, ...latLongErrors });
-
-        if (Object.keys(newErrors).length === 0 && Object.keys(latLongErrors).length === 0) {
-            const unitValue = unit === 'Hectáreas (ha)' ? 9 : unit === 'Metros cuadrados (m²)' ? 7 : 8;
-
+    useEffect(() => {
+        const fetchData = async () => {
             try {
-                const response = await axios.post(
-                    'https://agroinsight-backend-production.up.railway.app/farm/create',
-                    {
-                        nombre: name,
-                        ubicacion: location,
-                        area_total: area,
-                        unidad_area_id: unitValue,
-                        latitud: latitude,
-                        longitud: longitude,
-                    },
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    }
-                );
+                const categoriesResponse = await axios.get('https://agroinsight-backend-production.up.railway.app/input-categories', {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                setCategories(categoriesResponse.data.categories);
 
-                setModalMessage('Finca creada exitosamente');
-                setModalVisible(true);
+                const inputsResponse = await axios.get('https://agroinsight-backend-production.up.railway.app/agricultural-inputs', {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                setInputs(inputsResponse.data.inputs);
 
-                setTimeout(() => {
-                    setModalVisible(false);
-                    navigation.navigate('ViewFarms', { token });
-                }, 2000);
-
+                const machineryResponse = await axios.get('https://agroinsight-backend-production.up.railway.app/agricultural-machinery', {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                setMachinery(machineryResponse.data.machinery);
             } catch (error) {
-                console.error('Error creando finca:', error);
-                setModalMessage('Error al crear la finca');
-                setModalVisible(true);
-
-                setTimeout(() => {
-                    setModalVisible(false);
-                }, 2000);
+                console.error("Error fetching data", error);
             }
+        };
+        fetchData();
+    }, [token]);
+
+    const registerCosts = async () => {
+        try {
+            const laborCost = {
+                cantidad_trabajadores: Number(workersCount),
+                horas_trabajadas: Number(hoursWorked),
+                costo_hora: Number(name),
+                observaciones: "Trabajo manual"
+            };
+
+            const inputData = selectedInput
+                ? [{
+                    insumo_id: selectedInput.id,
+                    cantidad_utilizada: Number(inputQuantity),
+                    fecha_aplicacion: new Date().toISOString().split('T')[0],
+                    observaciones: "Uso de insumos"
+                }]
+                : [];
+
+            const machineryData = selectedMachinery
+                ? [{
+                    maquinaria_id: selectedMachinery.id,
+                    fecha_uso: new Date().toISOString().split('T')[0],
+                    horas_uso: Number(useHours),
+                    observaciones: "Uso de maquinaria"
+                }]
+                : [];
+
+            const requestData = {
+                labor_cost: laborCost,
+                inputs: inputData,
+                machinery: machineryData,
+            };
+
+            const response = await axios.post(
+                `https://agroinsight-backend-production.up.railway.app/farms/${farm_id}/tasks/${task_id}/costs`,
+                requestData,
+                {
+                    headers: { Authorization: `Bearer ${token}` },
+                }
+            );
+
+            setModalMessage('Costos registrados exitosamente');
+            setModalVisible(true);
+        } catch (error) {
+            console.error('Error registrando los costos:', error);
+            setModalMessage('Error al registrar los costos');
+            setModalVisible(true);
         }
-    };
-
-    const handleAreaChange = (text: string) => {
-        const regex = /^\d*\.?\d*$/;
-
-        if (regex.test(text)) {
-            setArea(text);
-        }
-    };
-
-    const handleLatitudeChange = (text: string) => {
-        const regex = /^-?\d*\.?\d*$/; // Permite números negativos y decimales
-
-        if (regex.test(text)) {
-            setLatitude(text);
-        }
-    };
-
-    const handleLongitudeChange = (text: string) => {
-        const regex = /^-?\d*\.?\d*$/; // Permite números negativos y decimales
-
-        if (regex.test(text)) {
-            setLongitude(text);
-        }
-    };
-
-
-    const handleSelectUnitType = (type: string) => {
-        setUnit(type);
-        setDropdownVisible(false);
     };
 
     return (
@@ -156,99 +130,130 @@ const CostRegister: React.FC = () => {
                     placeholder="Ingresa el costo por hora"
                     value={name}
                     onChangeText={setName}
-                    maxLength={50}
+                    keyboardType="numeric"
                 />
-                {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
-
                 <Text style={styles.label}>* Horas trabajadas</Text>
                 <TextInput
-                    style={[styles.input, !!errors.location && styles.errorInput]}
+                    style={[styles.input, !!errors.hoursWorked && styles.errorInput]}
                     placeholder="Ingresa el # de horas trabajadas"
-                    value={location}
-                    onChangeText={setLocation}
-                    maxLength={100}
+                    value={hoursWorked}
+                    onChangeText={setHoursWorked}
+                    keyboardType="numeric"
                 />
-                {errors.location && <Text style={styles.errorText}>{errors.location}</Text>}
-
-                {/* Campo Área */}
                 <Text style={styles.label}>* Número de trabajadores</Text>
                 <TextInput
-                    style={[styles.input, !!errors.area && styles.errorInput]}
+                    style={[styles.input, !!errors.workersCount && styles.errorInput]}
                     placeholder="Ingresa el # de trabajadores"
-                    value={area}
+                    value={workersCount}
                     keyboardType="numeric"
-                    onChangeText={handleAreaChange}
-                    maxLength={10}
+                    onChangeText={setWorkersCount}
                 />
-                {errors.area && <Text style={styles.errorText}>{errors.area}</Text>}
 
                 <Text style={styles.descriptionTitle}>Maquinaria Agrícola</Text>
 
                 <Text style={styles.label}>Máquina</Text>
                 <TouchableOpacity
                     style={styles.dropdownButton}
-                    onPress={() => setDropdownVisible(!isDropdownVisible)}
+                    onPress={() => setMachineryDropdownVisible(!isMachineryDropdownVisible)}
                 >
-                    <Text style={styles.dropdownText}>{unit || 'Seleccione la maquinaria'}</Text>
+                    <Text style={styles.dropdownText}>{selectedMachinery ? selectedMachinery.nombre : 'Seleccione la maquinaria'}</Text>
                     <Ionicons name="chevron-down" size={24} color="#333" />
                 </TouchableOpacity>
 
-                {isDropdownVisible && (
+                {isMachineryDropdownVisible && (
                     <View style={styles.dropdownContent}>
-                        {unitTypes.map((type, index) => (
+                        {machinery.map((machine) => (
                             <TouchableOpacity
-                                key={index}
+                                key={machine.id}
                                 style={styles.dropdownItem}
-                                onPress={() => handleSelectUnitType(type)}
+                                onPress={() => {
+                                    setSelectedMachinery(machine);
+                                    setMachineryDropdownVisible(false);
+                                }}
                             >
-                                <Text style={styles.dropdownItemText}>{type}</Text>
+                                <Text style={styles.dropdownItemText}>{machine.nombre}</Text>
                             </TouchableOpacity>
                         ))}
                     </View>
                 )}
 
-                <Text style={styles.label}> Horas de uso</Text>
+                <Text style={styles.label}>Horas de uso</Text>
                 <TextInput
-                    style={[styles.input, !!errors.area && styles.errorInput]}
+                    style={[styles.input, !!errors.useHours && styles.errorInput]}
                     placeholder="Ingresa el # de horas de uso"
-                    value={area}
+                    value={useHours}
                     keyboardType="numeric"
-                    onChangeText={handleAreaChange}
-                    maxLength={10}
+                    onChangeText={setUseHours}
                 />
-                {errors.area && <Text style={styles.errorText}>{errors.area}</Text>}
 
-                {/* Campo Latitud */}
-                <Text style={styles.label}>Latitud </Text>
+                <Text style={styles.descriptionTitle}>Insumos Agrícolas</Text>
+
+                <Text style={styles.label}>Categoría</Text>
+                <TouchableOpacity
+                    style={styles.dropdownButton}
+                    onPress={() => setCategoryDropdownVisible(!isCategoryDropdownVisible)}
+                >
+                    <Text style={styles.dropdownText}>{selectedCategory ? selectedCategory.nombre : 'Seleccione la categoría'}</Text>
+                    <Ionicons name="chevron-down" size={24} color="#333" />
+                </TouchableOpacity>
+
+                {isCategoryDropdownVisible && (
+                    <View style={styles.dropdownContent}>
+                        {categories.map((category) => (
+                            <TouchableOpacity
+                                key={category.id}
+                                style={styles.dropdownItem}
+                                onPress={() => {
+                                    setSelectedCategory(category);
+                                    setCategoryDropdownVisible(false);
+                                }}
+                            >
+                                <Text style={styles.dropdownItemText}>{category.nombre}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                )}
+
+                <Text style={styles.label}>Producto</Text>
+                <TouchableOpacity
+                    style={styles.dropdownButton}
+                    onPress={() => setInputDropdownVisible(!isInputDropdownVisible)}
+                >
+                    <Text style={styles.dropdownText}>{selectedInput ? selectedInput.nombre : 'Seleccione el producto'}</Text>
+                    <Ionicons name="chevron-down" size={24} color="#333" />
+                </TouchableOpacity>
+
+                {isInputDropdownVisible && (
+                    <View style={styles.dropdownContent}>
+                        {inputs.map((input) => (
+                            <TouchableOpacity
+                                key={input.id}
+                                style={styles.dropdownItem}
+                                onPress={() => {
+                                    setSelectedInput(input);
+                                    setInputDropdownVisible(false);
+                                }}
+                            >
+                                <Text style={styles.dropdownItemText}>{input.nombre}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                )}
+
+                <Text style={styles.label}>Cantidad</Text>
                 <TextInput
-                    style={[styles.input, !!errors.latitude && styles.errorInput]}
-                    placeholder="Ingresa la latitud (Entre -90 y 90)"
-                    value={latitude}
+                    style={[styles.input, !!errors.inputQuantity && styles.errorInput]}
+                    placeholder="Ingresa la cantidad"
+                    value={inputQuantity}
                     keyboardType="numeric"
-                    maxLength={15}
-                    onChangeText={handleLatitudeChange}
+                    onChangeText={setInputQuantity}
                 />
-                {errors.latitude && <Text style={styles.errorText}>{errors.latitude}</Text>}
 
-                {/* Campo Longitud */}
-                <Text style={styles.label}>Longitud</Text>
-                <TextInput
-                    style={[styles.input, !!errors.longitude && styles.errorInput]}
-                    placeholder="Ingresa la longitud (Entre -180 y 180)"
-                    value={longitude}
-                    keyboardType="numeric"
-                    maxLength={15}
-                    onChangeText={handleLongitudeChange}
-                />
-                {errors.longitude && <Text style={styles.errorText}>{errors.longitude}</Text>}
-
-                {/* Botón para crear finca */}
-                <TouchableOpacity style={styles.createButton} onPress={handleCreateFarm}>
-                    <Text style={styles.createButtonText}>Crear finca</Text>
+                <TouchableOpacity style={styles.createButton} onPress={registerCosts}>
+                    <Text style={styles.createButtonText}>Registrar costos</Text>
                 </TouchableOpacity>
             </ScrollView>
 
-            {/* Modal para mostrar mensajes */}
             <Modal
                 visible={modalVisible}
                 transparent={true}
@@ -256,7 +261,6 @@ const CostRegister: React.FC = () => {
             >
                 <View style={styles.modalContainer}>
                     <View style={styles.modalContent}>
-                        {/* <Ionicons name="checkmark-circle" size={50} color="#4CAF50" />  */}
                         <Text>{modalMessage}</Text>
                     </View>
                 </View>
@@ -334,6 +338,7 @@ const styles = StyleSheet.create({
         padding: 15,
         alignItems: 'center',
         marginTop: 20,
+        marginBottom: 10,
         borderRadius: 50,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
@@ -345,7 +350,6 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 16,
         fontWeight: 'bold',
-
     },
     errorText: {
         color: 'red',
