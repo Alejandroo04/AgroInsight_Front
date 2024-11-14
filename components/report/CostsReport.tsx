@@ -81,7 +81,8 @@ const CostsReport: React.FC = () => {
             );
 
             const reportData = response.data; // Guardamos los datos del reporte
-
+            console.log(reportData);
+            
             setModalMessage('Reporte generado exitosamente.');
             setTimeout(() => {
                 setModalVisible(false);
