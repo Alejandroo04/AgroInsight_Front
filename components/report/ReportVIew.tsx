@@ -2,9 +2,9 @@
 import React from 'react';
 import { View, Text, FlatList, Button, Alert, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 import { useRoute, RouteProp } from '@react-navigation/native';
-import RNHTMLtoPDF from 'react-native-html-to-pdf';
-import * as FileSystem from 'expo-file-system';
+import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system';
 
 type Lote = {
     lote_id: number;
@@ -35,30 +35,49 @@ const ReportView: React.FC = () => {
     const { reportData } = route.params;
 
     const generatePDF = async () => {
-        const htmlContent = `
-            <h1>Informe Financiero de ${reportData.finca_nombre}</h1>
-            <p><strong>Periodo:</strong> ${reportData.fecha_inicio} - ${reportData.fecha_fin}</p>
-            <p><strong>Costo Total:</strong> $${reportData.costo_total}</p>
-            <p><strong>Ingreso Total:</strong> $${reportData.ingreso_total}</p>
-            <p><strong>Ganancia Neta:</strong> $${reportData.ganancia_neta}</p>
-            <h2>Lotes</h2>
-            ${reportData.lotes
-                .map(
-                    (lote) => `
-                        <p><strong>Nombre del Lote:</strong> ${lote.lote_nombre}</p>
-                        <p><strong>Costo de Cultivos:</strong> $${lote.costo_cultivos}</p>
-                        <p><strong>Costo de Tareas:</strong> $${lote.costo_tareas}</p>
-                        <p><strong>Costo Total:</strong> $${lote.costo_total}</p>
-                        <p><strong>Ingreso Total:</strong> $${lote.ingreso_total}</p>
-                        <p><strong>Ganancia Neta:</strong> $${lote.ganancia_neta}</p>
-                        <hr/>
-                    `
-                )
-                .join('')}
-        `;
-        const options = { html: htmlContent, fileName: 'informe_financiero', directory: 'Documents' };
-        const file = await RNHTMLtoPDF.convert(options);
-        Alert.alert('PDF Generado', `PDF guardado en: ${file.filePath}`);
+        try {
+            const htmlContent = `
+                <h1>Informe Financiero de ${reportData.finca_nombre}</h1>
+                <p><strong>Periodo:</strong> ${reportData.fecha_inicio} - ${reportData.fecha_fin}</p>
+                <p><strong>Costo Total:</strong> $${reportData.costo_total}</p>
+                <p><strong>Ingreso Total:</strong> $${reportData.ingreso_total}</p>
+                <p><strong>Ganancia Neta:</strong> $${reportData.ganancia_neta}</p>
+                <h2>Lotes</h2>
+                ${reportData.lotes
+                    .map(
+                        (lote) => `
+                            <p><strong>Nombre del Lote:</strong> ${lote.lote_nombre}</p>
+                            <p><strong>Costo de Cultivos:</strong> $${lote.costo_cultivos}</p>
+                            <p><strong>Costo de Tareas:</strong> $${lote.costo_tareas}</p>
+                            <p><strong>Costo Total:</strong> $${lote.costo_total}</p>
+                            <p><strong>Ingreso Total:</strong> $${lote.ingreso_total}</p>
+                            <p><strong>Ganancia Neta:</strong> $${lote.ganancia_neta}</p>
+                            <hr/>
+                        `
+                    )
+                    .join('')}
+            `;
+
+            // Genera el PDF con expo-print
+            const { uri } = await Print.printToFileAsync({ html: htmlContent });
+
+            // Mueve el archivo PDF a la carpeta de documentos
+            const pdfFilePath = `${FileSystem.documentDirectory}informe_financiero.pdf`;
+            await FileSystem.moveAsync({
+                from: uri,
+                to: pdfFilePath,
+            });
+
+            // Verifica si el dispositivo soporta la función de compartir
+            if (await Sharing.isAvailableAsync()) {
+                await Sharing.shareAsync(pdfFilePath);
+            } else {
+                Alert.alert('Error', 'La función de compartir no está disponible en este dispositivo.');
+            }
+        } catch (error) {
+            console.error("Error generando PDF:", error);
+            Alert.alert('Error', 'Hubo un problema al generar el PDF.');
+        }
     };
 
     const exportToCSV = async () => {

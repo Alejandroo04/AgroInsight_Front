@@ -3368,6 +3368,11 @@ expo-modules-core@1.12.23:
   dependencies:
     invariant "^2.2.4"
 
+expo-print@~13.0.1:
+  version "13.0.1"
+  resolved "https://registry.yarnpkg.com/expo-print/-/expo-print-13.0.1.tgz#2fe419593aa812642f4ad7057928d2e712578e97"
+  integrity sha512-o8LuCguGrkyC5RaWEfL5N2J0V9mfbZ3GVzLpaf3KU5RrdYzGEjoiv4xlhVVzh/++hMUqOgnIrtF7tzWYhwu/7g==
+
 expo-sharing@~12.0.1:
   version "12.0.1"
   resolved "https://registry.yarnpkg.com/expo-sharing/-/expo-sharing-12.0.1.tgz#6c4d951beda47dac47112e679d60fc06c233b7aa"
