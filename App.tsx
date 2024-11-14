@@ -31,6 +31,8 @@ import { TermsAndConditions } from './components/TermsAndConditions';
 import TaskForUsers from './components/TaskForUsers';
 import TaskListForFarm from './components/TaskListForFarm';
 import Evidences from './components/IA/Evidences';
+import CostRegister from './components/costs/CostRegister';
+import ViewResultsIA from './components/IA/ViewResultsIA';
 
 const Stack = createStackNavigator();
 
@@ -69,7 +71,9 @@ export default function App() {
         <Stack.Screen name="TaskForUsers" component={TaskForUsers} options={{headerShown: false}}/>
         <Stack.Screen name="TaskListForFarm" component={TaskListForFarm} options={{headerShown: false}}/>
         <Stack.Screen name="Evidences" component={Evidences} options={{headerShown: false}}/>
-        
+        <Stack.Screen name="CostRegister" component={CostRegister} options={{headerShown: false}}/>
+        <Stack.Screen name="ViewResultsIA" component={ViewResultsIA} options={{headerShown: false}}/>
+
       </Stack.Navigator>
     </NavigationContainer>
   );

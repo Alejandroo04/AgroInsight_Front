@@ -24,7 +24,7 @@ const AssignTask: React.FC = () => {
   const [selectedPlotId, setSelectedPlotId] = useState<number | null>(null);
   const [plots, setPlots] = useState<any[]>([]);
   const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
+  const [descripcion, setDescripcion] = useState(''); // cambiado a "descripcion"
   const [startDate, setStartDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [successModalVisible, setSuccessModalVisible] = useState(false);
@@ -43,12 +43,13 @@ const AssignTask: React.FC = () => {
     estado: string;
   };
 
-  const taskTypes = ['Detección', 'Riego', 'Siembra', 'Control de maleza'];
+  const taskTypes = ['Monitoreo fitosanitario', 'Análisis de suelo', 'Riego', 'Siembra', 'Control de maleza'];
   const taskTypeIds: Record<string, number> = {
-    Detección: 16,
+    'Monitoreo fitosanitario': 16,
     Riego: 4,
     Siembra: 2,
     'Control de maleza': 6,
+    'Análisis de suelo': 37,
   };
 
   const maxDescriptionLength = 200;
@@ -107,12 +108,12 @@ const AssignTask: React.FC = () => {
       setErrorModalVisible(true);
       return false;
     }
-    if (!description.trim()) {
+    if (!descripcion.trim()) {
       setErrorMessage('La descripción de la tarea es obligatoria.');
       setErrorModalVisible(true);
       return false;
     }
-    if (description.length > maxDescriptionLength) {
+    if (descripcion.length > maxDescriptionLength) {
       setErrorMessage(`La descripción no puede superar los ${maxDescriptionLength} caracteres.`);
       setErrorModalVisible(true);
       return false;
@@ -132,7 +133,7 @@ const AssignTask: React.FC = () => {
           nombre: name,
           tipo_labor_id: selectedTaskTypeId,
           fecha_inicio_estimada: formattedStartDate,
-          description,
+          descripcion, // cambiado a "descripcion"
           estado_id: 1,
           lote_id: selectedPlotId,
         },
@@ -146,7 +147,7 @@ const AssignTask: React.FC = () => {
       const { task_id } = createTaskResponse.data;
       console.log(createTaskResponse.data);
 
-      const response =  await axios.post(
+      const response = await axios.post(
         'https://agroinsight-backend-production.up.railway.app/assignment/create',
         {
           usuario_ids: [workerId],
@@ -158,10 +159,9 @@ const AssignTask: React.FC = () => {
           },
         }
       );
-      console.log(response)
+      console.log(response);
       setSuccessModalVisible(true);
     } catch (error) {
-      
       if (error.response && error.response.data.message) {
         setErrorMessage(error.response.data.message);
       } else {
@@ -176,7 +176,7 @@ const AssignTask: React.FC = () => {
       <Header />
 
       <View style={styles.topRow}>
-        <Text style={styles.title}>Asignar labor</Text>
+        <Text style={styles.title}></Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.formContainer}>
@@ -245,14 +245,14 @@ const AssignTask: React.FC = () => {
         <Text style={styles.label}>* Descripción de la labor a realizar</Text>
         <TextInput
           style={styles.input}
-          value={description}
+          value={descripcion}
           onChangeText={(text) =>
-            text.length <= maxDescriptionLength ? setDescription(text) : null
+            text.length <= maxDescriptionLength ? setDescripcion(text) : null
           }
           multiline
           placeholder="Ingrese la descripción"
         />
-        <Text style={styles.charCount}>{description.length}/{maxDescriptionLength} caracteres</Text>
+        <Text style={styles.charCount}>{descripcion.length}/{maxDescriptionLength} caracteres</Text>
 
         <Text style={styles.label}>* Fecha inicio estimada</Text>
         <TouchableOpacity

@@ -41,12 +41,15 @@ const ViewAssignedTasks: React.FC = () => {
   // Navega al componente TaskDetail con los detalles específicos de la tarea
   const handleCropPress = (task) => {
     navigation.navigate('TaskDetail', {
+      id: task.id,
       nombre: task.nombre,
       tipo_labor_id: task.tipo_labor_id,
       fecha_inicio_estimada: task.fecha_inicio_estimada,
       fecha_finalizacion: task.fecha_finalizacion,
       descripcion: task.descripcion,
       estado_id: task.estado_id,
+      estado_nombre: task.estado_nombre,
+      tipo_labor_nombre: task.tipo_labor_nombre
     });
   };
 

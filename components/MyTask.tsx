@@ -12,6 +12,7 @@ const MyTask: React.FC = () => {
   const route = useRoute();
   const navigation = useNavigation(); // Inicializa la navegación
   const { token, userId, page } = route.params as { token: string, userId: number, page: number };
+  
 
   useEffect(() => {
     const fetchFarms = async () => {
