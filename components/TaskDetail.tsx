@@ -8,6 +8,7 @@ const TaskDetail: React.FC = () => {
   const route = useRoute();
   const { 
     id,
+    farmId,
     nombre, 
     tipo_labor_id, 
     fecha_inicio_estimada, 
@@ -20,7 +21,7 @@ const TaskDetail: React.FC = () => {
   } = route.params;
 
   const onRegisterCost = (taskId: number) => {
-    navigation.navigate('CostRegister', { token, taskId });
+    navigation.navigate('CostRegister', { token, farmId, id   });
   };
 
   return (
@@ -48,7 +49,9 @@ const TaskDetail: React.FC = () => {
         
         <Text style={styles.descriptionTitle}>Descripción:</Text>
         <Text style={styles.descriptionItem}>{descripcion || 'No hay descripción disponible.'}</Text>
-        <TouchableOpacity style={styles.button} onPress={onRegisterCost(id)}>
+        
+        {/* Botón para registrar costos */}
+        <TouchableOpacity style={styles.button} onPress={() => onRegisterCost(id)}>
           <Text style={styles.buttonText}>Registrar costos</Text>
         </TouchableOpacity>
       </View>
@@ -73,7 +76,7 @@ const styles = StyleSheet.create({
     elevation: 8,
     marginTop: 10,
     paddingHorizontal: 20,
-    alignSelf: 'flex-center',
+    alignSelf: 'center',
   },
   taskContainer: {
     margin: 20,
@@ -125,7 +128,6 @@ const styles = StyleSheet.create({
     color: '#333',
     marginVertical: 2,
   },
-  
 });
 
 export default TaskDetail;

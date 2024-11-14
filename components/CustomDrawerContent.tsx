@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Modal, TouchableWithoutFeedback, StyleSheet } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons'; // Asegúrate de tener instalado react-native-vector-icons
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -15,10 +15,14 @@ const CustomDrawerContent: React.FC<CustomDrawerContentProps> = ({ isVisible, on
   const handleLogout = async () => {
     try {
       await AsyncStorage.removeItem('jwtToken');
-      navigation.navigate('Login', { resetFields: true }); // Agregar el parámetro
+      navigation.navigate('Login', { resetFields: true });
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
     }
+  };
+
+  const goToHome = () => {
+    navigation.navigate('HomeAdmin');
   };
 
   return (
@@ -26,17 +30,18 @@ const CustomDrawerContent: React.FC<CustomDrawerContentProps> = ({ isVisible, on
       transparent={true}
       visible={isVisible}
       animationType="slide"
-      onRequestClose={onClose} // En Android permite cerrar el modal con el botón de atrás
+      onRequestClose={onClose}
     >
-      {/* Detecta cuando el usuario toca fuera del contenido del modal */}
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.drawerModalContainer}>
           <TouchableWithoutFeedback>
             <View style={styles.drawerContent}>
-              {/* Opción "Mi cuenta" */}
-              <TouchableOpacity style={styles.drawerItem} >
-                <Icon name="person-outline" size={24} color="gold" style={styles.drawerIcon} />
-                <Text style={styles.drawerLabel}>Mi cuenta</Text>
+            
+
+              {/* Opción "Home" */}
+              <TouchableOpacity style={styles.drawerItem} onPress={goToHome}>
+                <Icon name="home" size={24} color="blue" style={styles.drawerIcon} />
+                <Text style={styles.drawerLabel}>Home</Text>
               </TouchableOpacity>
 
               {/* Línea divisoria */}
@@ -52,7 +57,7 @@ const CustomDrawerContent: React.FC<CustomDrawerContentProps> = ({ isVisible, on
               <View style={styles.divider} />
 
               {/* Versión */}
-              <Text style={styles.versionText}>versión 0.3.0</Text>
+              <Text style={styles.versionText}>versión 4.0.0</Text>
             </View>
           </TouchableWithoutFeedback>
         </View>
@@ -65,7 +70,7 @@ const styles = StyleSheet.create({
   drawerModalContainer: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Fondo oscuro semi-transparente
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   drawerContent: {
     backgroundColor: '#fff',

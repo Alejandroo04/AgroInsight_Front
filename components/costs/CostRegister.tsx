@@ -26,7 +26,7 @@ const CostRegister: React.FC = () => {
     const [errors, setErrors] = useState({});
     const route = useRoute();
     const navigation = useNavigation();
-    const { token, farm_id, task_id } = route.params as { token: string, farm_id: number, task_id: number };
+    const { token, id, farmId } = route.params as { token: string, farmId: number, id: number };
 
     const [categories, setCategories] = useState([]);
     const [inputs, setInputs] = useState([]);
@@ -100,7 +100,7 @@ const CostRegister: React.FC = () => {
             };
 
             const response = await axios.post(
-                `https://agroinsight-backend-production.up.railway.app/farms/${farm_id}/tasks/${task_id}/costs`,
+                `https://agroinsight-backend-production.up.railway.app/farms/${farmId}/tasks/${id}/costs`,
                 requestData,
                 {
                     headers: { Authorization: `Bearer ${token}` },
@@ -109,6 +109,11 @@ const CostRegister: React.FC = () => {
 
             setModalMessage('Costos registrados exitosamente');
             setModalVisible(true);
+            // Redirigir a la vista anterior después de mostrar el mensaje de éxito por un momento
+            setTimeout(() => {
+                setModalVisible(false);
+                navigation.goBack();
+            }, 2000); // Espera 2 segundos antes de volver a la vista anterior
         } catch (error) {
             console.error('Error registrando los costos:', error);
             setModalMessage('Error al registrar los costos');

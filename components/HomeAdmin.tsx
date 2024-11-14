@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Image, TouchableOpacity, ScrollView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Header from './Header';
 import CustomDrawerContent from './CustomDrawerContent';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const HomeAdmin: React.FC = () => {
   const [userData, setUserData] = useState<{
@@ -12,49 +13,51 @@ const HomeAdmin: React.FC = () => {
     nombre: string;
     apellido: string;
     rol: string;
-    fincaId: string; // Almacena el ID de la finca
+    fincaId: string;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDrawerVisible, setDrawerVisible] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const navigation = useNavigation();
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const storedToken = await AsyncStorage.getItem('jwtToken');
-        if (storedToken) {
-          setToken(storedToken); // Set the token in state
-          const response = await axios.get('https://agroinsight-backend-production.up.railway.app/user/me', {
-            headers: {
-              Authorization: `Bearer ${storedToken}`,
-            },
-          });
-
-          if (response.status === 200) {
-            const fincaId = response.data.roles_fincas[0]?.finca || ''; // Extrae el ID de la finca
-            setUserData({
-              id: response.data.id,
-              nombre: response.data.nombre,
-              apellido: response.data.apellido,
-              rol: response.data.rol,
-              fincaId, // Almacena el ID de la finca en userData
+  useFocusEffect(
+    useCallback(() => {
+      const fetchUserData = async () => {
+        try {
+          const storedToken = await AsyncStorage.getItem('jwtToken');
+          if (storedToken) {
+            setToken(storedToken);
+            const response = await axios.get('https://agroinsight-backend-production.up.railway.app/user/me', {
+              headers: {
+                Authorization: `Bearer ${storedToken}`,
+              },
             });
-          } else {
-            setError('No se pudieron obtener los datos del usuario.');
-          }
-        } else {
-          navigation.navigate('Login'); // Navega a Login si no se encuentra el token
-        }
-      } catch (err) {
-        console.error('Error fetching user data:', err);
-        setError('Error al obtener los datos del usuario.');
-        navigation.navigate('Login');
-      }
-    };
 
-    fetchUserData();
-  }, [token]);
+            if (response.status === 200) {
+              const fincaId = response.data.roles_fincas[0]?.finca || '';
+              setUserData({
+                id: response.data.id,
+                nombre: response.data.nombre,
+                apellido: response.data.apellido,
+                rol: response.data.rol,
+                fincaId,
+              });
+            } else {
+              setError('No se pudieron obtener los datos del usuario.');
+            }
+          } else {
+            navigation.navigate('Login');
+          }
+        } catch (err) {
+          console.error('Error fetching user data:', err);
+          setError('Error al obtener los datos del usuario.');
+          navigation.navigate('Login');
+        }
+      };
+
+      fetchUserData();
+    }, [navigation]) // Dependencia `navigation` para evitar advertencias
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -67,11 +70,17 @@ const HomeAdmin: React.FC = () => {
             <>
               <Text style={styles.welcomeText}>Bienvenido</Text>
               <View style={styles.userInfo}>
-                <View style={styles.avatar} />
+                <Image
+                  source={require('../assets/farmer.png')}
+                  style={styles.avatar}
+                />
                 <View style={styles.userDetails}>
                   <Text style={styles.userName}>{userData.nombre} {userData.apellido}</Text>
                   <Text style={styles.userRole}>Administrador de finca</Text>
                 </View>
+                <TouchableOpacity onPress={() => navigation.navigate('MyAccount')}>
+                  <Icon name="edit" size={24} color="#4CAF50" style={styles.editIcon} />
+                </TouchableOpacity>
               </View>
 
               {/* Primer card */}
@@ -93,7 +102,7 @@ const HomeAdmin: React.FC = () => {
                 </View>
               </TouchableOpacity>
 
-              {/* Segundo card para "MyTask" con el ID del usuario y de la finca */}
+              {/* Segundo card */}
               <TouchableOpacity
                 style={styles.card}
                 onPress={() => {
@@ -159,7 +168,7 @@ const styles = StyleSheet.create({
   },
   content: {
     alignItems: 'center',
-    paddingBottom: 60, // Añade espacio para el botón de menú
+    paddingBottom: 60,
   },
   welcomeText: {
     fontSize: 24,
@@ -175,10 +184,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     width: '100%',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
@@ -188,8 +194,8 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#d3d3d3',
     marginRight: 15,
+    resizeMode: 'cover',
   },
   userDetails: {
     flex: 1,
@@ -201,6 +207,9 @@ const styles = StyleSheet.create({
   userRole: {
     fontSize: 14,
     color: 'gray',
+  },
+  editIcon: {
+    paddingLeft: 10,
   },
   card: {
     flexDirection: 'row',

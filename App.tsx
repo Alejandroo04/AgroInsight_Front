@@ -34,6 +34,9 @@ import Evidences from './components/IA/Evidences';
 import CostRegister from './components/costs/CostRegister';
 import ViewResultsIA from './components/IA/ViewResultsIA';
 import CostsReport from './components/report/CostsReport';
+import MyAccount from './components/profile/MyAccount';
+import ReportView from './components/report/ReportVIew';
+
 
 const Stack = createStackNavigator();
 
@@ -75,6 +78,8 @@ export default function App() {
         <Stack.Screen name="CostRegister" component={CostRegister} options={{headerShown: false}}/>
         <Stack.Screen name="ViewResultsIA" component={ViewResultsIA} options={{headerShown: false}}/>
         <Stack.Screen name="CostsReport" component={CostsReport} options={{headerShown: false}}/>
+        <Stack.Screen name="ReportView" component={ReportView} options={{headerShown: false}}/>
+        <Stack.Screen name="MyAccount" component={MyAccount} options={{headerShown: false}}/>
 
       </Stack.Navigator>
     </NavigationContainer>

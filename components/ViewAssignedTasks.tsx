@@ -11,7 +11,8 @@ const ViewAssignedTasks: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const { token, workerId, farmName, farmId } = route.params as { farmName: string, token: string, userId: string, workerId: number, farmId: number };
-  console.log(farmId)
+  
+  
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -52,6 +53,7 @@ const ViewAssignedTasks: React.FC = () => {
       estado_nombre: task.estado_nombre,
       tipo_labor_nombre: task.tipo_labor_nombre,
       token,
+      farmId
     });
   };
 

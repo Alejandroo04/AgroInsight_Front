@@ -9,7 +9,7 @@ import {
     ScrollView,
     Dimensions,
 } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useRoute, useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -23,29 +23,29 @@ const CostsReport: React.FC = () => {
     const [showStartDatePicker, setShowStartDatePicker] = useState(false);
     const [showEndDatePicker, setShowEndDatePicker] = useState(false);
 
-    const [categories, setCategories] = useState([]);
-    const [machinery, setMachinery] = useState([]);
-    const [selectedMachinery, setSelectedMachinery] = useState(null);
-    const [isMachineryDropdownVisible, setMachineryDropdownVisible] = useState(false);
+    const [farms, setFarms] = useState([]);
+    const [selectedFarm, setSelectedFarm] = useState(null);
+    const [isFarmDropdownVisible, setFarmDropdownVisible] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
     const [modalMessage, setModalMessage] = useState('');
 
     const route = useRoute();
+    const navigation = useNavigation();
+
     const { token } = route.params as { token: string };
 
     useEffect(() => {
-        const fetchData = async () => {
+        const fetchFarms = async () => {
             try {
-                const generateReport = await axios.get('https://agroinsight-backend-production.up.railway.app/reports/financial', {
+                const farm = await axios.get('https://agroinsight-backend-production.up.railway.app/farm/list/all', {
                     headers: { Authorization: `Bearer ${token}` },
                 });
-                setCategories(generateReport.data);
-
+                setFarms(farm.data.farms);
             } catch (error) {
-                console.error("Error fetching data", error);
+                console.error("Error fetching farms", error);
             }
         };
-        fetchData();
+        fetchFarms();
     }, [token]);
 
     const handleStartDateChange = (event, selectedDate) => {
@@ -55,9 +55,44 @@ const CostsReport: React.FC = () => {
     };
 
     const handleEndDateChange = (event, selectedDate) => {
-        const currentDate = selectedDate || '';
+        const currentDate = selectedDate || endDate;
         setShowEndDatePicker(false);
         setEndDate(currentDate);
+    };
+
+    const generateReport = async () => {
+        if (!selectedFarm) {
+            setModalMessage("Por favor, seleccione una finca.");
+            setModalVisible(true);
+            return;
+        }
+
+        try {
+            const response = await axios.get(
+                `https://agroinsight-backend-production.up.railway.app/reports/financial`,
+                {
+                    headers: { Authorization: `Bearer ${token}` },
+                    params: {
+                        farm_id: selectedFarm.id,
+                        start_date: startDate.toISOString().split('T')[0],
+                        end_date: endDate.toISOString().split('T')[0],
+                    },
+                }
+            );
+
+            const reportData = response.data; // Guardamos los datos del reporte
+
+            setModalMessage('Reporte generado exitosamente.');
+            setTimeout(() => {
+                setModalVisible(false);
+                // Navegamos a la pantalla de visualización del reporte
+                navigation.navigate('ReportView', { reportData });
+            }, 2000);
+        } catch (error) {
+            console.error("Error generating report", error);
+            setModalMessage('Error al generar el reporte financiero.');
+        }
+        setModalVisible(true);
     };
 
     return (
@@ -69,24 +104,24 @@ const CostsReport: React.FC = () => {
                 <Text style={styles.label}>Finca</Text>
                 <TouchableOpacity
                     style={styles.dropdownButton}
-                    onPress={() => setMachineryDropdownVisible(!isMachineryDropdownVisible)}
+                    onPress={() => setFarmDropdownVisible(!isFarmDropdownVisible)}
                 >
-                    <Text style={styles.dropdownText}>{selectedMachinery ? selectedMachinery.nombre : 'Seleccione una finca'}</Text>
+                    <Text style={styles.dropdownText}>{selectedFarm ? selectedFarm.nombre : 'Seleccione una finca'}</Text>
                     <Ionicons name="chevron-down" size={24} color="#333" />
                 </TouchableOpacity>
 
-                {isMachineryDropdownVisible && (
+                {isFarmDropdownVisible && (
                     <View style={styles.dropdownContent}>
-                        {machinery.map((machine) => (
+                        {farms.map((farm) => (
                             <TouchableOpacity
-                                key={machine.id}
+                                key={farm.id}
                                 style={styles.dropdownItem}
                                 onPress={() => {
-                                    setSelectedMachinery(machine);
-                                    setMachineryDropdownVisible(false);
+                                    setSelectedFarm(farm);
+                                    setFarmDropdownVisible(false);
                                 }}
                             >
-                                <Text style={styles.dropdownItemText}>{machine.nombre}</Text>
+                                <Text style={styles.dropdownItemText}>{farm.nombre}</Text>
                             </TouchableOpacity>
                         ))}
                     </View>
@@ -128,8 +163,8 @@ const CostsReport: React.FC = () => {
                     />
                 )}
 
-                <TouchableOpacity style={styles.createButton} onPress={() => setModalVisible(true)}>
-                    <Text style={styles.createButtonText}>Registrar costos</Text>
+                <TouchableOpacity style={styles.createButton} onPress={generateReport}>
+                    <Text style={styles.createButtonText}>Generar Reporte</Text>
                 </TouchableOpacity>
             </ScrollView>
 
