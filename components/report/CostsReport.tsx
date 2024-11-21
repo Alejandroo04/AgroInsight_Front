@@ -64,6 +64,7 @@ const CostsReport: React.FC = () => {
         if (!selectedFarm) {
             setModalMessage("Por favor, seleccione una finca.");
             setModalVisible(true);
+            setTimeout(() => setModalVisible(false), 2000); // El modal se cerrará automáticamente después de 2 segundos
             return;
         }
 

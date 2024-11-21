@@ -260,16 +260,22 @@ const CostRegister: React.FC = () => {
             </ScrollView>
 
             <Modal
-                visible={modalVisible}
-                transparent={true}
-                animationType="slide"
-            >
-                <View style={styles.modalContainer}>
-                    <View style={styles.modalContent}>
-                        <Text>{modalMessage}</Text>
-                    </View>
-                </View>
-            </Modal>
+    visible={modalVisible}
+    transparent={true}
+    animationType="slide"
+    onRequestClose={() => setModalVisible(false)} // Permitir cerrar con botón "atrás" en Android
+>
+    <TouchableOpacity
+        style={styles.modalContainer}
+        activeOpacity={1} // Evita que toques en el contenido también cierren el modal
+        onPress={() => setModalVisible(false)} // Cierra el modal al tocar fuera
+    >
+        <View style={styles.modalContent}>
+            <Text>{modalMessage}</Text>
+        </View>
+    </TouchableOpacity>
+</Modal>
+
         </SafeAreaView>
     );
 };
