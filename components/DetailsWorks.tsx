@@ -4,12 +4,37 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import CustomDrawerContent from './CustomDrawerContent';
 import Header from './Header';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+// Add type for your navigation parameters
+type RootStackParamList = {
+  ViewAssignedTasks: {
+    token: string;
+    workerId: number;
+    farmName: string;
+    farmId: number;
+    nombre: string;
+    apellido: string;
+    email: string;
+    estado: string;
+  };
+  AssignTask: {
+    token: string;
+    workerId: number;
+    farmId: number;
+    nombre: string;
+    apellido: string;
+    email: string;
+    estado: string;
+  };
+  // ... other routes
+};
 
 const DetailsWorks: React.FC = () => {
   const [isDrawerVisible, setDrawerVisible] = React.useState(false);
 
   const route = useRoute();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   // Obtener token, workerId, farmId y los detalles del trabajador desde los parámetros de navegación
   const { token, workerId, farmId, nombre, apellido, email, estado, farmName } = route.params as {
@@ -35,10 +60,12 @@ const DetailsWorks: React.FC = () => {
   };
 
   const handleAssignTasks = () => {
+    console.log('Parámetros en DetailsWorks:', { farmId, workerId, token });
     navigation.navigate('AssignTask', { token, workerId, farmId, nombre, apellido, email, estado});
   };
 
   const handleViewAssignedTasks = () => {
+    console.log('Parámetros en DetailsWorks (View):', { farmId, workerId, token, farmName });
     navigation.navigate('ViewAssignedTasks', { token, workerId, farmName, farmId, nombre, apellido, email, estado});
   };
 
