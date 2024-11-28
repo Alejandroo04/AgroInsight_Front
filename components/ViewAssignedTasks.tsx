@@ -12,7 +12,7 @@ const ViewAssignedTasks: React.FC = () => {
   const route = useRoute();
   const { token, workerId, farmName, farmId } = route.params as { farmName: string, token: string, userId: string, workerId: number, farmId: number };
   
-  
+  console.log('Validación de IDs:', { farmId, workerId, token });
 
   useEffect(() => {
     const fetchTasks = async () => {

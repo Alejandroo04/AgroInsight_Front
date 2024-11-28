@@ -63,10 +63,13 @@ const ViewPlots: React.FC = () => {
     }
   };
 
-  const handlePlotPress = (plotId: number) => {
-    console.log(plotId)
-  
-    navigation.navigate('ViewCrops', { token, plotId });
+  const handlePlotPress = (plotId: number, lat: number, lon: number) => {
+    navigation.navigate('ViewCrops', { 
+      token, 
+      plotId,
+      lat,
+      lon
+    });
   };
 
   return (
@@ -81,7 +84,7 @@ const ViewPlots: React.FC = () => {
       ) : plots.length > 0 ? (
         <View>
           {plots.map((plot) => (
-            <TouchableOpacity key={plot.id} style={styles.plotItem} onPress={() => handlePlotPress(plot.id)}>
+            <TouchableOpacity key={plot.id} style={styles.plotItem} onPress={() => handlePlotPress(plot.id, plot.latitud, plot.longitud)}>
               <View style={styles.plotContent}>
                 <Text style={styles.plotName}>{plot.nombre}</Text>
                 <Icon name="eye-outline" size={24} color="#4CAF50" style={styles.eyeIcon} />
